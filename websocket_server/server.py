@@ -2,8 +2,11 @@ import asyncio
 import websockets
 import json
 import socket
+import os
 
 from netstuff import *
+
+STATE_FILE = "lsys-state.txt"
 
 PORT = 8081
 HOST = None
@@ -31,9 +34,7 @@ def reset_lsys():
 	global lsys_rules, lsys_axiom
 	lsys_rules = []
 	lsys_axiom = "0"
-reset_lsys()
 
-# implement reset
 def parse_lsys(string):
 	global lsys_rules, lsys_axiom
 
@@ -57,6 +58,23 @@ def serialize_lsys():
 	ret_list.reverse()
 	ret.extend(map(lambda x: x[0] + "." + x[1], ret_list))
 	return ",".join(ret)
+
+def load_lsys():
+	if os.path.isfile(STATE_FILE):
+		with open(STATE_FILE, "r", encoding="utf-8") as file:
+			parse_lsys(file.read())
+			print("Loaded LSys: " + serialize_lsys())
+	else:
+		reset_lsys()
+load_lsys()
+
+def store_lsys():
+	with open(STATE_FILE, 'w', encoding='utf-8') as file:
+		file.write(serialize_lsys())
+
+
+
+
 
 def register_console_consumer(websocket):
 	console_consumers.add(websocket)
@@ -111,6 +129,7 @@ async def ckar(websocket, path):
 					await broadcast_console(msg["payload"])
 				if msg["type"] == "lsys" and len(consumers) > 0:
 					parse_lsys(msg["payload"])
+					store_lsys()
 					await broadcast_lsys()
 		except websockets.exceptions.ConnectionClosed:
 			pass
