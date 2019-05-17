@@ -2,8 +2,10 @@ import asyncio
 import websockets
 import json
 
+from netstuff import *
+
 async def repl():
-    async with websockets.connect('ws://192.168.178.235:8081/ckar_consume') as websocket:
+    async with websockets.connect(get_websocket_uri("ckar_consume")) as websocket:
     	async for message in websocket:
     		print(message)
 

@@ -1,6 +1,22 @@
 import asyncio
 import websockets
 import json
+import socket
+
+from netstuff import *
+
+PORT = 8081
+HOST = None
+
+if HOST == None:
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(("8.8.8.8", 80))
+	HOST = s.getsockname()[0]
+	s.close()
+
+announce_server(HOST, PORT)
+
+# START
 
 consumers = set()
 console_consumers = set()
@@ -42,7 +58,7 @@ def serialize_lsys():
 	ret.extend(map(lambda x: x[0] + "." + x[1], ret_list))
 	return ",".join(ret)
 
-async def register_code_consumer(websocket):
+def register_console_consumer(websocket):
 	console_consumers.add(websocket)
 	print("Connected Console Consumers: " + str(len(console_consumers)))
 
@@ -56,16 +72,14 @@ async def unregister_consumer(websocket):
 		console_consumers.remove(websocket)
 	print("Disconnect!")
 
-def send_console(code):
-	msg = json.dumps({"type": "code", "payload": code})
-	for websocket in console_consumers:
-		websocket.send(msg)
+async def broadcast_console(console):
+	msg = json.dumps({"type": "console", "payload": console})
+	await asyncio.wait([websocket.send(msg) for websocket in console_consumers])
 
 async def send_lsys(websocket, msg):
 	print(websocket)
 	print(msg)
 	await websocket.send(msg)
-
 
 async def broadcast_lsys():
 	msg = json.dumps({"type": "lsys", "payload": serialize_lsys()})
@@ -93,9 +107,9 @@ async def ckar(websocket, path):
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
-				if msg["type"] == "console":
-					send_console(msg["payload"])
-				if msg["type"] == "lsys":
+				if msg["type"] == "console" and len(console_consumers) > 0:
+					await broadcast_console(msg["payload"])
+				if msg["type"] == "lsys" and len(consumers) > 0:
 					parse_lsys(msg["payload"])
 					await broadcast_lsys()
 		except websockets.exceptions.ConnectionClosed:
@@ -103,6 +117,6 @@ async def ckar(websocket, path):
 		finally:
 			print("Disconnected Server!")
 
-start_server = websockets.serve(ckar, '192.168.178.235', 8081)
+start_server = websockets.serve(ckar, HOST, PORT)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
