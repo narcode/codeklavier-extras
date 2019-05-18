@@ -24,7 +24,7 @@ announce_server(HOST, PORT)
 
 # START
 
-consumer_categories = ["basic", "console"]
+consumer_categories = ["basic", "console", "view"]
 consumers = {}
 for category in consumer_categories:
 	consumers[category] = set()
@@ -130,6 +130,8 @@ async def ckar(websocket, path):
 				msg = json.loads(message)
 				if msg["type"] == "subscribe" and msg["payload"] == "console":
 					register(consumers["console"], websocket)
+				if msg["type"] == "subscribe" and msg["payload"] == "view":
+					register(consumers["view"], websocket)
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
@@ -143,11 +145,18 @@ async def ckar(websocket, path):
 				msg = json.loads(message)
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
+				if msg["type"] == "view" and len(consumers["view"]) > 0:
+					await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
 				if msg["type"] == "lsys":
-					parse_forrest(msg["payload"])
-					store_forrest()
-					if len(consumers["basic"]) > 0:
-						await broadcast(consumers["basic"], {"type": "lsys", "payload": serialize_forrest()})
+					try:
+						parse_forrest(msg["payload"])
+						store_forrest()
+						if len(consumers["basic"]) > 0:
+							await broadcast(consumers["basic"], {"type": "lsys", "payload": serialize_forrest()})
+					except Exception as e:
+						print("Invalid L-Sys!")
+						if len(consumers["console"]) > 0:
+							await broadcast(consumers["console"], {"type": "lsys", "payload": "Invalid L-Sys!"})
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
