@@ -34,7 +34,7 @@ for category in consumer_categories:
 forrest = {}
 
 def empty_lsys():
-	return {"axiom": 0, "rules": []}
+	return {"axiom": "0", "rules": []}
 
 def reset_forrest():
 	global forrest
