@@ -19,88 +19,104 @@ if HOST == None:
 
 announce_server(HOST, PORT)
 
-# START
-
-consumers = set()
-console_consumers = set()
-
 # TODO: Here we can also check for invalid lsys messages
 
-# rules stored as tuples: (key, rule)
-lsys_rules = []
-lsys_axiom = "0"
 
-def reset_lsys():
-	global lsys_rules, lsys_axiom
-	lsys_rules = []
-	lsys_axiom = "0"
+# START
 
-def parse_lsys(string):
-	global lsys_rules, lsys_axiom
+consumer_categories = ["basic", "console"]
+consumers = {}
+for category in consumer_categories:
+	consumers[category] = set()
 
+forrest = {}
+
+def empty_lsys():
+	return {"axiom": 0, "rules": []}
+
+def reset_forrest():
+	global forrest
+	forrest = {}
+	forrest["0"] = empty_lsys()
+
+def reset_lsys(lsys):
+	fresh = empty_tree
+	lsys["axiom"] = fresh["axiom"]
+	lsys["rules"] = fresh["rules"]
+
+def parse_forrest(string):
+	systems = string.strip().split("#")
+	for system in systems:
+		pair = system.strip().split("@")
+		key = pair[0]
+		rules = pair[1]
+		if not key in forrest:
+			forrest[key] = empty_lsys()
+			print("Created L-Sys with Key: " + key)
+		parse_lsys(forrest[key], rules)
+
+def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
 	for rule in rules:
 		pair = rule.split(".")
 		# axiom
 		if pair[0] == "*":
 			if pair[1] == "0":
-				reset_lsys()
+				reset_lsys(tree)
 			else:
-				lsys_axiom = pair[1]
+				lsys["axiom"] = pair[1]
 		else:
-			rules_list = list(filter(lambda x: x[0] != pair[0], lsys_rules))
+			rules_list = list(filter(lambda x: x[0] != pair[0], lsys["rules"]))
 			lsys_rules = [pair]
 			lsys_rules.extend(rules_list)
+			lsys["rules"] = lsys_rules
 
-def serialize_lsys():
-	ret = ["*." + lsys_axiom]
-	ret_list = lsys_rules.copy()
+def serialize_lsys(lsys):
+	ret = ["*." + lsys["axiom"]]
+	ret_list = lsys["rules"].copy()
 	ret_list.reverse()
 	ret.extend(map(lambda x: x[0] + "." + x[1], ret_list))
 	return ",".join(ret)
 
-def load_lsys():
+def serialize_forrest():
+	ret = map(lambda x: x + "@" + serialize_lsys(forrest[x]), forrest.keys())
+	return "#".join(ret)
+
+def load_forrest():
 	if os.path.isfile(STATE_FILE):
 		with open(STATE_FILE, "r", encoding="utf-8") as file:
-			parse_lsys(file.read())
-			print("Loaded LSys: " + serialize_lsys())
+			parse_forrest(file.read())
+			print("Loaded Forrest: " + serialize_forrest())
 	else:
-		reset_lsys()
-load_lsys()
+		reset_forrest()
+load_forrest()
 
-def store_lsys():
+def store_forrest():
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
-		file.write(serialize_lsys())
+		file.write(serialize_forrest())
 
+def print_consumers_count():
+	ret = ""
+	for key in consumers.keys():
+		ret = ret + "/ " + key + ": " + len(consumers[key]) + " /"
+	print(ret)
 
+def register_consumer(consumers_cat, websocket):
+	consumers_cat.add(websocket)
+	print_consumer_count()
 
-
-
-def register_console_consumer(websocket):
-	console_consumers.add(websocket)
-	print("Connected Console Consumers: " + str(len(console_consumers)))
-
-async def register_consumer(websocket):
-	consumers.add(websocket)
-	print("Connected Consumers: " + str(len(consumers)))
-
-async def unregister_consumer(websocket):
-	consumers.remove(websocket)
-	if websocket in console_consumers:
-		console_consumers.remove(websocket)
-	print("Disconnect!")
-
-async def broadcast_console(console):
-	msg = json.dumps({"type": "console", "payload": console})
-	await asyncio.wait([websocket.send(msg) for websocket in console_consumers])
+def unregister_consumer(websocket):
+	for consumers_cat in consumers:
+		if websocket in consumers_cat:
+			consumers_cat.remove(websocket)
+	print_consumer_count()
 
 async def send_lsys(websocket, msg):
 	print(websocket)
 	print(msg)
 	await websocket.send(msg)
 
-async def broadcast_lsys():
-	msg = json.dumps({"type": "lsys", "payload": serialize_lsys()})
+async def broadcast(consumers, msg):
 	await asyncio.wait([websocket.send(msg) for websocket in consumers])
 
 
@@ -108,16 +124,16 @@ async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
 		await send_lsys(websocket, json.dumps({"type": "lsys", "payload": serialize_lsys()}))
-		await register_consumer(websocket)
+		register(consumers["basic"], websocket)
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
 				if msg["type"] == "subscribe" and msg["payload"] == "console":
-					register_console_consumer(websocket)
+					register(consumers["console"], websocket)
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
-			await unregister_consumer(websocket)
+			await unregister(websocket)
 
 	if path == "/ckar_serve":
 		try:
@@ -125,12 +141,13 @@ async def ckar(websocket, path):
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
-				if msg["type"] == "console" and len(console_consumers) > 0:
-					await broadcast_console(msg["payload"])
-				if msg["type"] == "lsys" and len(consumers) > 0:
-					parse_lsys(msg["payload"])
-					store_lsys()
-					await broadcast_lsys()
+				if msg["type"] == "console" and len(consumers["console"]) > 0:
+					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
+				if msg["type"] == "lsys":
+					parse_forrest(msg["payload"])
+					store_forrest()
+					if len(consumers["basic"]) > 0:
+						await broadcast(consumers["basic"], {"type": "lsys", "payload": serialize_forrest()})
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
