@@ -55,7 +55,7 @@ def parse_forrest(string):
 	if string == "":
 		reset_forrest()
 		return
-	
+
 	systems = string.strip().split("#")
 	for system in systems:
 		pair = system.strip().split("@")
@@ -71,7 +71,7 @@ def parse_lsys(lsys, string):
 		# axiom
 		if pair[0] == "*":
 			if pair[1] == "0":
-				reset_lsys(tree)
+				reset_lsys(lsys)
 			else:
 				lsys["axiom"] = pair[1]
 		else:
