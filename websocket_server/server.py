@@ -61,7 +61,7 @@ def parse_forrest(string):
 
 		pair = system.strip().split("@")
 		if len(pair) != 2:
-			print("Ignoring invalid tree pair: " + rule)
+			print("Ignoring invalid tree pair: " + system)
 			continue
 
 		key = pair[0]
