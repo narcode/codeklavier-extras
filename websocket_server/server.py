@@ -58,16 +58,27 @@ def parse_forrest(string):
 
 	systems = string.strip().split("#")
 	for system in systems:
+
 		pair = system.strip().split("@")
+		if len(pair) != 2:
+			print("Ignoring invalid tree pair: " + rule)
+			continue
+
 		key = pair[0]
 		rules = pair[1]
+
 		assure_tree(key)
 		parse_lsys(forrest[key], rules)
 
 def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
 	for rule in rules:
+		
 		pair = rule.split(".")
+		if len(pair) != 2:
+			print("Ignoring invalid rule pair: " + rule)
+			continue
+
 		# axiom
 		if pair[0] == "*":
 			if pair[1] == "0":
