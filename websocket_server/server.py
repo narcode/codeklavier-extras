@@ -39,10 +39,10 @@ def empty_lsys():
 def reset_forrest():
 	global forrest
 	forrest = {}
-	forrest["0"] = empty_lsys()
+	forrest["1"] = empty_lsys()
 
 def reset_lsys(lsys):
-	fresh = empty_tree
+	fresh = empty_lsys()
 	lsys["axiom"] = fresh["axiom"]
 	lsys["rules"] = fresh["rules"]
 
@@ -73,7 +73,7 @@ def parse_forrest(string):
 def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
 	for rule in rules:
-		
+
 		pair = rule.split(".")
 		if len(pair) != 2:
 			print("Ignoring invalid rule pair: " + rule)
