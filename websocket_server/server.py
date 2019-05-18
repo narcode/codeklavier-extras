@@ -52,6 +52,10 @@ def assure_tree(key):
 		print("Created L-Sys with Key: " + key)
 
 def parse_forrest(string):
+	if string == "":
+		reset_forrest()
+		return
+	
 	systems = string.strip().split("#")
 	for system in systems:
 		pair = system.strip().split("@")
