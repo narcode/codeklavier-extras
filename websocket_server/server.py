@@ -163,6 +163,7 @@ async def ckar(websocket, path):
 							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 					except Exception as e:
 						print("Invalid L-Sys!")
+						print(e);
 						if len(consumers["console"]) > 0:
 							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
 		except websockets.exceptions.ConnectionClosed:
