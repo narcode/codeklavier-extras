@@ -44,15 +44,18 @@ def reset_lsys(lsys):
 	lsys["axiom"] = fresh["axiom"]
 	lsys["rules"] = fresh["rules"]
 
+def assure_tree(key):
+	if not key in forrest:
+		forrest[key] = empty_lsys()
+		print("Created L-Sys with Key: " + key)
+
 def parse_forrest(string):
 	systems = string.strip().split("#")
 	for system in systems:
 		pair = system.strip().split("@")
 		key = pair[0]
 		rules = pair[1]
-		if not key in forrest:
-			forrest[key] = empty_lsys()
-			print("Created L-Sys with Key: " + key)
+		assure_tree(key)
 		parse_lsys(forrest[key], rules)
 
 def parse_lsys(lsys, string):
@@ -145,8 +148,10 @@ async def ckar(websocket, path):
 				msg = json.loads(message)
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
-				if msg["type"] == "view" and len(consumers["view"]) > 0:
-					await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
+				if msg["type"] == "view":
+					assure_tree(msg["payload"])
+					if len(consumers["view"]) > 0:
+						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])
