@@ -46,15 +46,18 @@ def reset_lsys(lsys):
 	lsys["axiom"] = fresh["axiom"]
 	lsys["rules"] = fresh["rules"]
 
+def assure_tree(key):
+	if not key in forrest:
+		forrest[key] = empty_lsys()
+		print("Created L-Sys with Key: " + key)
+
 def parse_forrest(string):
 	systems = string.strip().split("#")
 	for system in systems:
 		pair = system.strip().split("@")
 		key = pair[0]
 		rules = pair[1]
-		if not key in forrest:
-			forrest[key] = empty_lsys()
-			print("Created L-Sys with Key: " + key)
+		assure_tree(key)
 		parse_lsys(forrest[key], rules)
 
 def parse_lsys(lsys, string):
@@ -100,18 +103,19 @@ def store_forrest():
 def print_consumers_count():
 	ret = ""
 	for key in consumers.keys():
-		ret = ret + "/ " + key + ": " + len(consumers[key]) + " /"
+		ret = ret + "/ " + key + ": " + str(len(consumers[key])) + " /"
 	print(ret)
 
-def register_consumer(consumers_cat, websocket):
+def register(consumers_cat, websocket):
 	consumers_cat.add(websocket)
-	print_consumer_count()
+	print_consumers_count()
 
-def unregister_consumer(websocket):
-	for consumers_cat in consumers:
+def unregister(websocket):
+	for key in consumers:
+		consumers_cat = consumers[key]
 		if websocket in consumers_cat:
 			consumers_cat.remove(websocket)
-	print_consumer_count()
+	print_consumers_count()
 
 async def send_lsys(websocket, msg):
 	print(websocket)
@@ -125,7 +129,7 @@ async def broadcast(consumers, msg):
 async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
-		await send_lsys(websocket, json.dumps({"type": "lsys", "payload": serialize_lsys()}))
+		await send_lsys(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 		register(consumers["basic"], websocket)
 		try:
 			async for message in websocket:
@@ -137,7 +141,7 @@ async def ckar(websocket, path):
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
-			await unregister(websocket)
+			unregister(websocket)
 
 	if path == "/ckar_serve":
 		try:
@@ -147,18 +151,20 @@ async def ckar(websocket, path):
 				msg = json.loads(message)
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
-				if msg["type"] == "view" and len(consumers["view"]) > 0:
-					await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
+				if msg["type"] == "view":
+					assure_tree(msg["payload"])
+					if len(consumers["view"]) > 0:
+						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])
 						store_forrest()
 						if len(consumers["basic"]) > 0:
-							await broadcast(consumers["basic"], {"type": "lsys", "payload": serialize_forrest()})
+							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 					except Exception as e:
 						print("Invalid L-Sys!")
 						if len(consumers["console"]) > 0:
-							await broadcast(consumers["console"], {"type": "lsys", "payload": "Invalid L-Sys!"})
+							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
