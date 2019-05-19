@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# TODO: Here we can also check for invalid lsys messages
+
 import asyncio
 import websockets
 import json
@@ -9,9 +11,13 @@ import os
 from netstuff import *
 
 STATE_FILE = "lsys-state.txt"
+MASTER_TRANSFORM_FILE = "master-transform.json"
 
 PORT = 8081
 HOST = None
+DO_ANNOUNCE = True
+
+
 
 if HOST == None:
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,12 +25,9 @@ if HOST == None:
 	HOST = s.getsockname()[0]
 	s.close()
 
-announce_server(HOST, PORT)
+if DO_ANNOUNCE:
+	announce_server(HOST, PORT)
 
-# TODO: Here we can also check for invalid lsys messages
-
-
-# START
 
 consumer_categories = ["basic", "console", "view"]
 consumers = {}
@@ -33,8 +36,18 @@ for category in consumer_categories:
 
 forrest = {}
 
+
+def identity_transform():
+	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
+
+def load_master_transform():
+	with open(MASTER_TRANSFORM_FILE, "r", encoding="utf-8") as file:
+		mt = json.loads(file.read())
+		return json.dumps({"type": "transform", "key": "master", "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]})
+master_transform_msg = load_master_transform()
+
 def empty_lsys():
-	return {"axiom": "0", "rules": []}
+	return {"axiom": "0", "rules": [], "transform": identity_transform()}
 
 def reset_forrest():
 	global forrest
@@ -102,18 +115,26 @@ def serialize_forrest():
 	ret = map(lambda x: x + "@" + serialize_lsys(forrest[x]), forrest.keys())
 	return "#".join(ret)
 
-def load_forrest():
+def load_state():
 	if os.path.isfile(STATE_FILE):
 		with open(STATE_FILE, "r", encoding="utf-8") as file:
-			parse_forrest(file.read())
+			state = json.loads(file.read())
+			parse_forrest(state["forrest"])
+			for transform_dict in state["transforms"]:
+				forrest[transform_dict["key"]]["transform"] = transform_dict["transform"]
+				print(json.dumps(transform_dict))
 			print("Loaded Forrest: " + serialize_forrest())
 	else:
 		reset_forrest()
-load_forrest()
+load_state()
 
-def store_forrest():
+def store_state():
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
-		file.write(serialize_forrest())
+		state = {
+			"forrest": serialize_forrest(),
+			"transforms": list(map(lambda x: {"key": x, "transform": forrest[x]["transform"]}, forrest.keys()))
+		}
+		file.write(json.dumps(state))
 
 def print_consumers_count():
 	ret = ""
@@ -132,9 +153,11 @@ def unregister(websocket):
 			consumers_cat.remove(websocket)
 	print_consumers_count()
 
-async def send_lsys(websocket, msg):
-	print(websocket)
-	print(msg)
+def apply_transform(msg):
+	assure_tree(msg["tree"])
+	forrest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
+
+async def send_msg(websocket, msg):
 	await websocket.send(msg)
 
 async def broadcast(consumers, msg):
@@ -144,8 +167,12 @@ async def broadcast(consumers, msg):
 async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
-		await send_lsys(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 		register(consumers["basic"], websocket)
+		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
+		await send_msg(websocket, master_transform_msg)
+		for key in forrest.keys():
+			transform = forrest[key]["transform"]
+			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
@@ -170,10 +197,13 @@ async def ckar(websocket, path):
 					assure_tree(msg["payload"])
 					if len(consumers["view"]) > 0:
 						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
+				if msg["type"] == "transform":
+					apply_transform(msg)
+					await broadcast(consumers["basic"], json.dumps(msg))
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])
-						store_forrest()
+						store_state()
 						if len(consumers["basic"]) > 0:
 							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 					except Exception as e:
