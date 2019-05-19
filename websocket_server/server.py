@@ -43,7 +43,7 @@ def identity_transform():
 def load_master_transform():
 	with open(MASTER_TRANSFORM_FILE, "r", encoding="utf-8") as file:
 		mt = json.loads(file.read())
-		return json.dumps({"type": "transform", "key": "master", "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]})
+		return json.dumps({"type": "transform", "tree": "master", "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]})
 master_transform_msg = load_master_transform()
 
 def empty_lsys():
