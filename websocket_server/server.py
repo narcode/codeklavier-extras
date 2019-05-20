@@ -83,6 +83,9 @@ def parse_forrest(string):
 		assure_tree(key)
 		parse_lsys(forrest[key], rules)
 
+def server_state_msg():
+	return json.dumps({"type": "serverState", "numTrees": len(forrest.keys())})
+
 def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
 	for rule in rules:
@@ -188,6 +191,8 @@ async def ckar(websocket, path):
 	if path == "/ckar_serve":
 		try:
 			print("Connected Server!")
+			await send_msg(websocket, server_state_msg())
+			print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
