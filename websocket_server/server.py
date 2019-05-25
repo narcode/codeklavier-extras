@@ -204,7 +204,8 @@ async def ckar(websocket, path):
 						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
 				if msg["type"] == "transform":
 					apply_transform(msg)
-					await broadcast(consumers["basic"], json.dumps(msg))
+					if len(consumers["basic"]) > 0:
+						await broadcast(consumers["basic"], json.dumps(msg))
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])
