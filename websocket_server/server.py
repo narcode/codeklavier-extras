@@ -20,9 +20,13 @@ parser.add_argument('-l', '--local',
 	dest="local",
 	action="store_true"
 )
-args = vars(parser.parse_args())
-print(args)
+parser.add_argument('-d', '--debug',
+	help="post exceptions on disconnects",
+	dest="debug",
+	action="store_true"
+)
 
+args = vars(parser.parse_args())
 
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
@@ -197,8 +201,9 @@ async def ckar(websocket, path):
 					register(consumers["console"], websocket)
 				if msg["type"] == "subscribe" and msg["payload"] == "view":
 					register(consumers["view"], websocket)
-		except websockets.exceptions.ConnectionClosed:
-			pass
+		except websockets.exceptions.ConnectionClosed as e:
+			if args["debug"]:
+				print(e)
 		finally:
 			unregister(websocket)
 
@@ -232,8 +237,9 @@ async def ckar(websocket, path):
 						print(e);
 						if len(consumers["console"]) > 0:
 							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
-		except websockets.exceptions.ConnectionClosed:
-			pass
+		except websockets.exceptions.ConnectionClosed as e:
+			if args["debug"]:
+				print(e)
 		finally:
 			print("Disconnected Supplier!")
 
