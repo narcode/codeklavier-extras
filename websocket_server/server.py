@@ -15,26 +15,47 @@ from netstuff import *
 # https://docs.python.org/2/library/argparse.html
 
 parser = argparse.ArgumentParser(description='Websocket server for CodeklaviAR')
+
 parser.add_argument('-l', '--local',
 	help="don't announce this Websocket server to the master server.",
 	dest="local",
 	action="store_true"
 )
+
 parser.add_argument('-d', '--debug',
 	help="post exceptions on disconnects",
 	dest="debug",
 	action="store_true"
 )
 
+parser.add_argument('-p', '--port',
+	help="specify the servers port",
+	dest="port",
+	action="store",
+	type=int,
+	default=8081
+)
+
+parser.add_argument("-r", "--reset",
+	help="reset server state on startup",
+	dest="reset",
+	action="store_true"
+)
+
 args = vars(parser.parse_args())
+print(args) # PATRICK CHECK IF THIS IS AN INT
 
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
-PORT = 8081
+if args["reset"]:
+	os.remove(STATE_FILE)
+
+PORT = args["port"]
 HOST = None
 DO_ANNOUNCE = not args["local"]
 
+NUM_SHAPES = 2
 
 if HOST == None:
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -54,7 +75,6 @@ for category in consumer_categories:
 
 forrest = {}
 
-
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
 
@@ -65,7 +85,7 @@ def load_master_transform():
 master_transform_msg = load_master_transform()
 
 def empty_lsys():
-	return {"axiom": "0", "rules": [], "transform": identity_transform()}
+	return {"axiom": "0", "rules": [], "transform": identity_transform(), "shape": "1"}
 
 def reset_forrest():
 	global forrest
@@ -102,7 +122,7 @@ def parse_forrest(string):
 		parse_lsys(forrest[key], rules)
 
 def server_state_msg():
-	return json.dumps({"type": "serverState", "numTrees": len(forrest.keys())})
+	return json.dumps({"type": "serverState", "numTrees": len(forrest.keys()), "numShapes": NUM_SHAPES})
 
 def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
@@ -143,7 +163,8 @@ def load_state():
 			parse_forrest(state["forrest"])
 			for transform_dict in state["transforms"]:
 				forrest[transform_dict["key"]]["transform"] = transform_dict["transform"]
-				print(json.dumps(transform_dict))
+			for shape_dict in state["shapes"]:
+				forrest[shape_dict["key"]]["shape"] = shape_dict["shape"]
 			print("Loaded Forrest: " + serialize_forrest())
 	else:
 		reset_forrest()
@@ -153,7 +174,8 @@ def store_state():
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
 		state = {
 			"forrest": serialize_forrest(),
-			"transforms": list(map(lambda x: {"key": x, "transform": forrest[x]["transform"]}, forrest.keys()))
+			"transforms": list(map(lambda x: {"key": x, "transform": forrest[x]["transform"]}, forrest.keys())),
+			"shapes": list(map(lambda x: {"key": x, "shape": forrest[x]["shape"]}, forrest.keys()))
 		}
 		file.write(json.dumps(state))
 
@@ -177,6 +199,10 @@ def unregister(websocket):
 def apply_transform(msg):
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
+
+def apply_shape(msg):
+	assure_tree(msg["tree"])
+	forrest[msg["tree"]]["shape"] = msg["shape"]
 
 async def send_msg(websocket, msg):
 	await websocket.send(msg)
@@ -215,16 +241,25 @@ async def ckar(websocket, path):
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
+				
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
+				
 				if msg["type"] == "view":
 					assure_tree(msg["payload"])
 					if len(consumers["view"]) > 0:
 						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
+				
 				if msg["type"] == "transform":
 					apply_transform(msg)
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
+				
+				if msg["type"] == "shape":
+					apply_shape(msg)
+					if len(consumers["basic"]) > 0:
+						await broadcast(consumers["basic"], json.dumps(msg))
+
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])
@@ -237,6 +272,7 @@ async def ckar(websocket, path):
 						print(e);
 						if len(consumers["console"]) > 0:
 							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
+		
 		except websockets.exceptions.ConnectionClosed as e:
 			if args["debug"]:
 				print(e)
