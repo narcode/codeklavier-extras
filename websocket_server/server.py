@@ -7,16 +7,29 @@ import websockets
 import json
 import socket
 import os
+import argparse
 
 from netstuff import *
+
+# argparse
+# https://docs.python.org/2/library/argparse.html
+
+parser = argparse.ArgumentParser(description='Websocket server for CodeklaviAR')
+parser.add_argument('-l', '--local',
+	help="don't announce this Websocket server to the master server.",
+	dest="local",
+	action="store_true"
+)
+args = vars(parser.parse_args())
+print(args)
+
 
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
 PORT = 8081
 HOST = None
-DO_ANNOUNCE = True
-
+DO_ANNOUNCE = not args["local"]
 
 
 if HOST == None:
@@ -27,7 +40,8 @@ if HOST == None:
 
 if DO_ANNOUNCE:
 	announce_server(HOST, PORT)
-
+else:
+	print("Did not announce my IP to master server.")
 
 consumer_categories = ["basic", "console", "view"]
 consumers = {}
