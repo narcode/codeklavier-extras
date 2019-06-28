@@ -43,7 +43,7 @@ parser.add_argument("-r", "--reset",
 )
 
 args = vars(parser.parse_args())
-print(args) # PATRICK CHECK IF THIS IS AN INT
+# print(args)
 
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
@@ -162,9 +162,9 @@ def load_state():
 			state = json.loads(file.read())
 			parse_forrest(state["forrest"])
 			for transform_dict in state["transforms"]:
-				forrest[transform_dict["key"]]["transform"] = transform_dict["transform"]
+				forrest[transform_dict["tree"]]["transform"] = transform_dict["transform"]
 			for shape_dict in state["shapes"]:
-				forrest[shape_dict["key"]]["shape"] = shape_dict["shape"]
+				forrest[shape_dict["tree"]]["shape"] = shape_dict["shape"]
 			print("Loaded Forrest: " + serialize_forrest())
 	else:
 		reset_forrest()
@@ -174,8 +174,8 @@ def store_state():
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
 		state = {
 			"forrest": serialize_forrest(),
-			"transforms": list(map(lambda x: {"key": x, "transform": forrest[x]["transform"]}, forrest.keys())),
-			"shapes": list(map(lambda x: {"key": x, "shape": forrest[x]["shape"]}, forrest.keys()))
+			"transforms": list(map(lambda x: {"tree": x, "transform": forrest[x]["transform"]}, forrest.keys())),
+			"shapes": list(map(lambda x: {"tree": x, "shape": forrest[x]["shape"]}, forrest.keys()))
 		}
 		file.write(json.dumps(state))
 
@@ -215,11 +215,13 @@ async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
-		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 		await send_msg(websocket, master_transform_msg)
 		for key in forrest.keys():
 			transform = forrest[key]["transform"]
+			shape = forrest[key]["shape"]
 			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
+			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))		
+		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
