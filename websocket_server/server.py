@@ -190,7 +190,7 @@ async def ckar(websocket, path):
 
 	if path == "/ckar_serve":
 		try:
-			print("Connected Server!")
+			print("Connected Supplier!")
 			await send_msg(websocket, server_state_msg())
 			print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
@@ -221,7 +221,7 @@ async def ckar(websocket, path):
 		except websockets.exceptions.ConnectionClosed:
 			pass
 		finally:
-			print("Disconnected Server!")
+			print("Disconnected Supplier!")
 
 start_server = websockets.serve(ckar, HOST, PORT)
 asyncio.get_event_loop().run_until_complete(start_server)
