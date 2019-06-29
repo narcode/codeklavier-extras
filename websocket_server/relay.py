@@ -5,15 +5,9 @@ import argparse
 import sys
 import socket
 
-
 from netstuff import *
 
-HOST = None
-if HOST == None:
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect(("8.8.8.8", 80))
-	HOST = s.getsockname()[0]
-	s.close()
+# TODO: Refactor into 2 Threads + Thread Safe Queue
 
 # argparse
 # https://docs.python.org/2/library/argparse.html
@@ -35,9 +29,9 @@ parser.add_argument('--to',
 )
 
 parser.add_argument('--from-local',
-	help="receive messages from local machine on port 8081",
+	help="receive messages from local machine on port " + str(get_default_port()),
 	action="store_const",
-	const="ws://" + HOST + ":8081/ckar_consume",
+	const= get_local_websocket_uri("ckar_consume"),
 	dest="from"
 )
 

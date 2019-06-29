@@ -33,7 +33,7 @@ parser.add_argument('-p', '--port',
 	dest="port",
 	action="store",
 	type=int,
-	default=8081
+	default=get_default_port()
 )
 
 parser.add_argument("-r", "--reset",
@@ -48,7 +48,7 @@ args = vars(parser.parse_args())
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
-if args["reset"]:
+if args["reset"] and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
 
 PORT = args["port"]
@@ -58,10 +58,7 @@ DO_ANNOUNCE = not args["local"]
 NUM_SHAPES = 3
 
 if HOST == None:
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect(("8.8.8.8", 80))
-	HOST = s.getsockname()[0]
-	s.close()
+	HOST = get_local_ip()
 
 if DO_ANNOUNCE:
 	announce_server(HOST, PORT)
