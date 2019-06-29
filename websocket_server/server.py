@@ -55,7 +55,7 @@ PORT = args["port"]
 HOST = None
 DO_ANNOUNCE = not args["local"]
 
-NUM_SHAPES = 2
+NUM_SHAPES = 3
 
 if HOST == None:
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
