@@ -33,7 +33,7 @@ parser.add_argument('-p', '--port',
 	dest="port",
 	action="store",
 	type=int,
-	default=8081
+	default=get_default_port()
 )
 
 parser.add_argument("-r", "--reset",
@@ -55,13 +55,10 @@ PORT = args["port"]
 HOST = None
 DO_ANNOUNCE = not args["local"]
 
-NUM_SHAPES = 2
+NUM_SHAPES = 3
 
 if HOST == None:
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect(("8.8.8.8", 80))
-	HOST = s.getsockname()[0]
-	s.close()
+	HOST = get_local_ip()
 
 if DO_ANNOUNCE:
 	announce_server(HOST, PORT)
