@@ -5,8 +5,9 @@ import argparse
 import sys
 import socket
 
-
 from netstuff import *
+
+# TODO: Refactor into 2 Threads + Thread Safe Queue
 
 HOST = None
 if HOST == None:

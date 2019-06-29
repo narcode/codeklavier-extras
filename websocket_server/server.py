@@ -48,7 +48,7 @@ args = vars(parser.parse_args())
 STATE_FILE = "lsys-state.txt"
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
-if args["reset"]:
+if args["reset"] and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
 
 PORT = args["port"]
