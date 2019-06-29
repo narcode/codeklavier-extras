@@ -1,6 +1,6 @@
 import urllib.request
 import json
-import sockets
+import socket
 
 announce_url = "https://keyboardsunite.com/ckar/"
 get_url = "https://keyboardsunite.com/ckar/get.php"
