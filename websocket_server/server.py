@@ -42,8 +42,8 @@ parser.add_argument("-r", "--reset",
 	action="store_true"
 )
 
-parser.add_argument('-f', "--force",
-	help="force a host/ip to store in the master server",
+parser.add_argument('-a', "--announce",
+	help="announce a host/ip to store in the master server",
 	action="store",
 	dest="host",
 	default="NONE"
@@ -60,18 +60,22 @@ if args["reset"] and os.path.exists(STATE_FILE):
 
 PORT = args["port"]
 HOST = None
+ANNOUNCE_HOST = None
 DO_ANNOUNCE = not args["local"]
 
 if args["host"] != "NONE":
-	HOST = args["host"]
+	ANNOUNCE_HOST = args["host"]
 
 NUM_SHAPES = 6
 
 if HOST == None:
 	HOST = get_local_ip()
 
+if ANNOUNCE_HOST == None:
+	ANNOUNCE_HOST = HOST
+
 if DO_ANNOUNCE:
-	announce_server(HOST, PORT)
+	announce_server(ANNOUNCE_HOST, PORT)
 else:
 	print("Did not announce my IP to master server.")
 
