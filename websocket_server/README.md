@@ -1,1 +1,1 @@
-# Here lives the websocket server by P. Borgeat
+# Here lives the websocket server by P. Borgeat, aka 🐙
