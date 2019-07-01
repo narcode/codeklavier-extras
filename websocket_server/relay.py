@@ -42,6 +42,12 @@ parser.add_argument('--to-master',
 	dest="to"
 )
 
+parser.add_argument("--forward-all", 
+	help="relay all messages (also view and console)",
+	dest="forward_all",
+	action="store_true"
+)
+
 to_websocket = None
 
 args = vars(parser.parse_args())
@@ -58,6 +64,10 @@ async def repl():
     async with websockets.connect(args["from"]) as websocket:
     	
     	to_websocket = None
+
+    	if args["forward_all"]:
+    		await websocket.send("{\"type\": \"subscribe\", \"payload\": \"console\"}")
+    		await websocket.send("{\"type\": \"subscribe\", \"payload\": \"view\"}")
 
     	if args["to"] != "NONE":
     		to_websocket = await websockets.connect(args["to"])
