@@ -42,6 +42,13 @@ parser.add_argument("-r", "--reset",
 	action="store_true"
 )
 
+parser.add_argument('-f', "--force",
+	help="force a host/ip to store in the master server",
+	action="store",
+	dest="host",
+	default="NONE"
+)
+
 args = vars(parser.parse_args())
 # print(args)
 
@@ -54,6 +61,9 @@ if args["reset"] and os.path.exists(STATE_FILE):
 PORT = args["port"]
 HOST = None
 DO_ANNOUNCE = not args["local"]
+
+if args["host"] != "NONE":
+	HOST = args["host"]
 
 NUM_SHAPES = 3
 
