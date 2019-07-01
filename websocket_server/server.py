@@ -55,7 +55,7 @@ PORT = args["port"]
 HOST = None
 DO_ANNOUNCE = not args["local"]
 
-NUM_SHAPES = 3
+NUM_SHAPES = 6
 
 if HOST == None:
 	HOST = get_local_ip()
@@ -217,7 +217,7 @@ async def ckar(websocket, path):
 			transform = forrest[key]["transform"]
 			shape = forrest[key]["shape"]
 			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
-			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))		
+			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))
 		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 		try:
 			async for message in websocket:
@@ -240,20 +240,20 @@ async def ckar(websocket, path):
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
-				
+
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
-				
+
 				if msg["type"] == "view":
 					assure_tree(msg["payload"])
 					if len(consumers["view"]) > 0:
 						await broadcast(consumers["view"], json.dumps({"type": "view", "payload": msg["payload"]}))
-				
+
 				if msg["type"] == "transform":
 					apply_transform(msg)
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
-				
+
 				if msg["type"] == "shape":
 					apply_shape(msg)
 					if len(consumers["basic"]) > 0:
@@ -271,7 +271,7 @@ async def ckar(websocket, path):
 						print(e);
 						if len(consumers["console"]) > 0:
 							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
-		
+
 		except websockets.exceptions.ConnectionClosed as e:
 			if args["debug"]:
 				print(e)
