@@ -9,7 +9,7 @@ from netstuff import *
 parser = argparse.ArgumentParser(description='LSystem command console for CodeklaviAR websocket server')
 
 parser.add_argument('-l', '--local',
-	help="don't announce this Websocket server to the master server.",
+	help="connect to local websocket server.",
 	dest="local",
 	action="store_true"
 )

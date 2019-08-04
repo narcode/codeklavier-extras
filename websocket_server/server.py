@@ -42,17 +42,25 @@ parser.add_argument("-r", "--reset",
 	action="store_true"
 )
 
-parser.add_argument('-a', "--announce",
+parser.add_argument("-a", "--announce",
 	help="announce a host/ip to store in the master server",
 	action="store",
 	dest="host",
 	default="NONE"
 )
 
+parser.add_argument("-f", "--file",
+	help="load state from file",
+	action="store",
+	dest="file",
+	default="NONE"
+)
+
 args = vars(parser.parse_args())
 # print(args)
 
-STATE_FILE = "lsys-state.txt"
+STATE_FILE = "lsys-state.json"
+STATE_LOAD_FILE = STATE_FILE
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
 if args["reset"] and os.path.exists(STATE_FILE):
@@ -65,6 +73,9 @@ DO_ANNOUNCE = not args["local"]
 
 if args["host"] != "NONE":
 	ANNOUNCE_HOST = args["host"]
+
+if args["file"] != "NONE":
+	STATE_LOAD_FILE = args["file"]
 
 NUM_SHAPES = 6
 
@@ -167,9 +178,9 @@ def serialize_forrest():
 	ret = map(lambda x: x + "@" + serialize_lsys(forrest[x]), forrest.keys())
 	return "#".join(ret)
 
-def load_state():
-	if os.path.isfile(STATE_FILE):
-		with open(STATE_FILE, "r", encoding="utf-8") as file:
+def load_state(filename):
+	if os.path.isfile(filename):
+		with open(filename, "r", encoding="utf-8") as file:
 			state = json.loads(file.read())
 			parse_forrest(state["forrest"])
 			for transform_dict in state["transforms"]:
@@ -179,7 +190,7 @@ def load_state():
 			print("Loaded Forrest: " + serialize_forrest())
 	else:
 		reset_forrest()
-load_state()
+load_state(STATE_LOAD_FILE)
 
 def store_state():
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:

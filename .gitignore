@@ -1,4 +1,8 @@
 websocket_server/lsys-state.txt
+websocket_server/lsys-state.json
+
+# Patricks shortcuts
+*.bat 
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
