@@ -16,6 +16,13 @@ parser.add_argument('-l', '--local',
 	action="store_true"
 )
 
+parser.add_argument('-s', '--silent',
+	help="don't connect as a supplier and send random messages",
+	dest="silent",
+	action="store_true"
+)
+
+
 parser.add_argument("-n", 
 	help="number of simultaneous connections",
 	type=int,
@@ -72,7 +79,8 @@ async def send_loop():
 		await asyncio.sleep(4)
 		print("... let's go!")
 		while True:
-			await websocket.send(random_lsys())
+			if not args["silent"]:
+				await websocket.send(random_lsys())
 			sent_message = True
 			await asyncio.sleep(2)
 
