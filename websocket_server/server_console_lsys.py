@@ -23,7 +23,7 @@ else:
 
 
 async def repl():
-    async with websockets.connect(ws_uri) as websocket:
+    async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
     	while True: 
         	cmd = input("Enter CKAR LSystem Command: ")
         	await websocket.send(json.dumps({"type": "lsys", "payload": cmd}))

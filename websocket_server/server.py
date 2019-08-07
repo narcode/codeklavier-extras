@@ -269,6 +269,9 @@ async def ckar(websocket, path):
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))
 
+				if msg["type"] == "consoleStatus" and len(consumers["console"]) > 0:
+					await broadcast(consumers["console"], json.dumps({"type": "consoleStatus", "payload": msg["payload"]}))
+
 				if msg["type"] == "view":
 					assure_tree(msg["payload"])
 					if len(consumers["view"]) > 0:
@@ -303,6 +306,6 @@ async def ckar(websocket, path):
 		finally:
 			print("Disconnected Supplier!")
 
-start_server = websockets.serve(ckar, HOST, PORT)
+start_server = websockets.serve(ckar, HOST, PORT, ping_interval=3, ping_timeout=60)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

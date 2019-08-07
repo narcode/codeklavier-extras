@@ -8,6 +8,7 @@ import socket
 from netstuff import *
 
 # TODO: Refactor into 2 Threads + Thread Safe Queue
+# TODO: Adjust ping timeouts
 
 # argparse
 # https://docs.python.org/2/library/argparse.html

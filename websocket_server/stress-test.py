@@ -22,7 +22,6 @@ parser.add_argument('-s', '--silent',
 	action="store_true"
 )
 
-
 parser.add_argument("-n", 
 	help="number of simultaneous connections",
 	type=int,

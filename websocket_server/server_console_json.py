@@ -21,7 +21,7 @@ else:
 	ws_uri = get_websocket_uri("ckar_serve")
 
 async def repl():
-    async with websockets.connect(ws_uri) as websocket:
+    async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
     	while True: 
         	cmd = input("Enter CKAR JSON Command: ")
         	await websocket.send(cmd)
