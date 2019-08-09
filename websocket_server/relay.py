@@ -78,28 +78,40 @@ async def receiveLoop():
 						print(" < " + message)
 					if relay_queue != None:
 						await relay_queue.put(message)
+
 		except Exception as e:
-			print("Exception in consumer loop. Trying to cope with it!")
+			print("Exception in consumer loop ...")
 			print(e)
 
-		print("Lost consumer connection. Reconnecting!")
+		print("... reconnecting 'from'-server!")
 		await asyncio.sleep(1)
 
 async def supplierLoop():
+	message = None
 	while True:
 		try:
 			async with websockets.connect(args["to"], ping_interval=3, ping_timeout=None) as websocket:
 				print("Connected as supplier")
+
+				# oh still an old message from last time?
+				if message != None:
+					await websocket.send(message)
+					print("Resending message:")
+					print(" > " + message)
+					relay_queue.task_done()
+
 				while True:
 					message = await relay_queue.get()
 					await websocket.send(message)
 					print(" > " + message)
+					message = None
 					relay_queue.task_done()
+		
 		except Exception as e:
-			print("Exception in supplier loop. Trying to cope with it!")
+			print("Exception in supplier loop ...")
 			print(e)
 
-		print("Lost supplier connection. Reconnecting!")
+		print("... reconnecting 'to'-server!")
 		await asyncio.sleep(1)
 
 tasks = [receiveLoop()]
