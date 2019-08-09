@@ -42,6 +42,12 @@ parser.add_argument("-r", "--reset",
 	action="store_true"
 )
 
+parser.add_argument("-n", "--nosave",
+	help="dont store the current lsys state",
+	dest="nosave",
+	action="store_true"
+)
+
 parser.add_argument("-a", "--announce",
 	help="announce a host/ip to store in the master server",
 	action="store",
@@ -63,7 +69,7 @@ STATE_FILE = "lsys-state.json"
 STATE_LOAD_FILE = STATE_FILE
 MASTER_TRANSFORM_FILE = "master-transform.json"
 
-if args["reset"] and os.path.exists(STATE_FILE):
+if args["reset"] and (not args["nosave"]) and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
 
 PORT = args["port"]
@@ -179,7 +185,7 @@ def serialize_forrest():
 	return "#".join(ret)
 
 def load_state(filename):
-	if os.path.isfile(filename):
+	if os.path.isfile(filename) and (not args["reset"]):
 		with open(filename, "r", encoding="utf-8") as file:
 			state = json.loads(file.read())
 			parse_forrest(state["forrest"])
@@ -193,6 +199,8 @@ def load_state(filename):
 load_state(STATE_LOAD_FILE)
 
 def store_state():
+	if args["nosave"]:
+		return
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
 		state = {
 			"forrest": serialize_forrest(),
