@@ -7,9 +7,6 @@ import socket
 
 from netstuff import *
 
-# TODO: Refactor into 2 Threads + Thread Safe Queue
-# TODO: Adjust ping timeouts
-
 # argparse
 # https://docs.python.org/2/library/argparse.html
 
@@ -49,7 +46,11 @@ parser.add_argument("--forward-all",
 	action="store_true"
 )
 
-to_websocket = None
+parser.add_argument("--silent", "-s",
+	help="don't post messages; this might be invoked for performance reasons",
+	dest="silent",
+	action="store_true"
+)
 
 args = vars(parser.parse_args())
 
@@ -59,30 +60,60 @@ if args["to"] == "MASTER":
 if args["from"] == "MASTER":
 	args["from"] = get_websocket_uri("ckar_consume")
 
-# print(args)
 
-async def repl():
-    async with websockets.connect(args["from"]) as websocket:
-    	
-    	to_websocket = None
+relay_queue = None
 
-    	if args["forward_all"]:
-    		await websocket.send("{\"type\": \"subscribe\", \"payload\": \"console\"}")
-    		await websocket.send("{\"type\": \"subscribe\", \"payload\": \"view\"}")
+async def receiveLoop():
+	while True:
+		try:
+			async with websockets.connect(args["from"], ping_interval=3, ping_timeout=None) as websocket:
+				print("Connected as consumer")
 
-    	if args["to"] != "NONE":
-    		to_websocket = await websockets.connect(args["to"])
+				if args["forward_all"]:
+					await websocket.send("{\"type\": \"subscribe\", \"payload\": \"console\"}")
+					await websocket.send("{\"type\": \"subscribe\", \"payload\": \"view\"}")
 
-    	async for message in websocket:
-    		print(message)
-    		if to_websocket != None:
-    			# don't relay master transform
-    			if not "\"tree\": \"master\"" in message: # hack hack hack
-    				await to_websocket.send(message)
+				async for message in websocket:
+					if not args["silent"]:
+						print(" < " + message)
+					if relay_queue != None:
+						await relay_queue.put(message)
+		except Exception as e:
+			print("Exception in consumer loop. Trying to cope with it!")
+			print(e)
+
+		print("Lost consumer connection. Reconnecting!")
+		await asyncio.sleep(1)
+
+async def supplierLoop():
+	while True:
+		try:
+			async with websockets.connect(args["to"], ping_interval=3, ping_timeout=None) as websocket:
+				print("Connected as supplier")
+				while True:
+					message = await relay_queue.get()
+					await websocket.send(message)
+					print(" > " + message)
+					relay_queue.task_done()
+		except Exception as e:
+			print("Exception in supplier loop. Trying to cope with it!")
+			print(e)
+
+		print("Lost supplier connection. Reconnecting!")
+		await asyncio.sleep(1)
+
+tasks = [receiveLoop()]
 
 print("Relaying from: " + args["from"])
 if args["to"] != "NONE":
 	print("Relaying to: " + args["to"])
+	tasks.append(supplierLoop())
 
-asyncio.get_event_loop().run_until_complete(repl())
-asyncio.get_event_loop().run_forever()
+async def main():
+	global relay_queue
+
+	if args["to"] != "NONE":
+		relay_queue = asyncio.Queue()
+	await asyncio.gather(*tasks)
+
+asyncio.run(main())
