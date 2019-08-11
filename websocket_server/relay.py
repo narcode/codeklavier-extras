@@ -74,10 +74,12 @@ async def receiveLoop():
 					await websocket.send("{\"type\": \"subscribe\", \"payload\": \"view\"}")
 
 				async for message in websocket:
-					if not args["silent"]:
-						print(" < " + message)
-					if relay_queue != None:
-						await relay_queue.put(message)
+					# clumsily filtering marker transforms
+					if not "\"type\": \"transform\", \"tree\": \"marker" in message:
+						if not args["silent"]:
+							print(" < " + message)
+						if relay_queue != None:
+							await relay_queue.put(message)
 
 		except Exception as e:
 			print("Exception in consumer loop ...")

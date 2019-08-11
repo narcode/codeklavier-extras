@@ -67,7 +67,7 @@ args = vars(parser.parse_args())
 
 STATE_FILE = "lsys-state.json"
 STATE_LOAD_FILE = STATE_FILE
-MASTER_TRANSFORM_FILE = "master-transform.json"
+MARKER_TRANSFORMS_FILE = "marker-transforms.json"
 
 if args["reset"] and (not args["nosave"]) and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
@@ -106,11 +106,14 @@ forrest = {}
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
 
-def load_master_transform():
-	with open(MASTER_TRANSFORM_FILE, "r", encoding="utf-8") as file:
-		mt = json.loads(file.read())
-		return json.dumps({"type": "transform", "tree": "master", "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]})
-master_transform_msg = load_master_transform()
+def load_marker_transforms():
+	with open(MARKER_TRANSFORMS_FILE, "r", encoding="utf-8") as file:
+		msgs = []
+		mts = json.loads(file.read())
+		for mt in mts:
+			msgs.append(json.dumps({"type": "transform", "tree": mt["tree"], "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]}))
+		return msgs
+marker_transform_msgs = load_marker_transforms()
 
 def empty_lsys():
 	return {"axiom": "0", "rules": [], "transform": identity_transform(), "shape": "1"}
@@ -240,12 +243,12 @@ async def send_msg(websocket, msg):
 async def broadcast(consumers, msg):
 	await asyncio.wait([websocket.send(msg) for websocket in consumers])
 
-
 async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
-		await send_msg(websocket, master_transform_msg)
+		for marker_transform_msg in marker_transform_msgs:
+			await send_msg(websocket, marker_transform_msg)
 		for key in forrest.keys():
 			transform = forrest[key]["transform"]
 			shape = forrest[key]["shape"]
