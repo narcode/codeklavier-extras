@@ -249,6 +249,7 @@ async def ckar(websocket, path):
 		register(consumers["basic"], websocket)
 		for marker_transform_msg in marker_transform_msgs:
 			await send_msg(websocket, marker_transform_msg)
+		await send_msg(websocket, json.dumps({"type": "serverEvent", "payload": "endMarkerConfig"}))
 		for key in forrest.keys():
 			transform = forrest[key]["transform"]
 			shape = forrest[key]["shape"]

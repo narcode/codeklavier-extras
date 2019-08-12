@@ -75,7 +75,7 @@ async def receiveLoop():
 
 				async for message in websocket:
 					# clumsily filtering marker transforms
-					if not "\"type\": \"transform\", \"tree\": \"marker"  or "\"type\": \"transform\", \"tree\": \"master" in message:
+					if not "\"type\": \"transform\", \"tree\": \"marker"  or "\"type\": \"transform\", \"tree\": \"master" or "\"type\": \"serverEvent\"" in message:
 						if not args["silent"]:
 							print(" < " + message)
 						if relay_queue != None:
