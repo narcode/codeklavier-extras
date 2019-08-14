@@ -11,6 +11,7 @@ def get_default_port():
 def announce_server(host, port):
 	url = announce_url + "?host=" + str(host) + "&port=" + str(port)
 	req = urllib.request.urlopen(url)
+	print("Annoucing " + str(host) + ":" + str(port))
 	print(req.read().decode("utf-8"))
 
 def get_websocket_uri(path):
