@@ -1,4 +1,5 @@
 [
 	{"tree": "master", "position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]},
-	{"tree": "marker-Marker-1", "position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
+	{"tree": "marker-forrest1", "position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]},
+	{"tree": "marker-forrest2", "position": [-2.228, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
 ]
