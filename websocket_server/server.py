@@ -299,6 +299,11 @@ async def ckar(websocket, path):
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
 
+				if msg["type"] == "value":
+					#  TODO: apply values
+					if len(consumers["basic"]) > 0:
+						await broadcast(consumers["basic"], json.dumps(msg))
+
 				if msg["type"] == "lsys":
 					try:
 						parse_forrest(msg["payload"])

@@ -49,7 +49,7 @@ sent_message = False
 
 async def receive_loop(i):
 	global took_time, this_time
-	async with websockets.connect(consume_uri) as websocket:
+	async with websockets.connect(consume_uri, ping_interval=3, ping_timeout=None) as websocket:
 		async for message in websocket:
 			clients[i]["payload"] = message
 			numAgree = 0
