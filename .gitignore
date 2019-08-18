@@ -4,6 +4,9 @@ websocket_server/lsys-state.json
 # Patricks shortcuts
 *.bat 
 
+# Felipes vim stuff
+*.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
