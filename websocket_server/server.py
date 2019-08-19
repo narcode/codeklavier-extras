@@ -245,7 +245,7 @@ async def broadcast(consumers, msg):
 	await asyncio.wait([websocket.send(msg) for websocket in consumers])
 
 async def ckar(websocket, path):
-	print(path)
+	# print(path)
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
 		
@@ -263,7 +263,7 @@ async def ckar(websocket, path):
 			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values["key"]}))
 
 		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
-		
+
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
@@ -279,9 +279,9 @@ async def ckar(websocket, path):
 
 	if path == "/ckar_serve":
 		try:
-			print("Connected Supplier!")
+			# print("Connected Supplier!")
 			await send_msg(websocket, server_state_msg())
-			print("Sent Server State: " + server_state_msg())
+			# print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
@@ -329,7 +329,8 @@ async def ckar(websocket, path):
 			if args["debug"]:
 				print(e)
 		finally:
-			print("Disconnected Supplier!")
+			pass
+			# print("Disconnected Supplier!")
 
 start_server = websockets.serve(ckar, HOST, PORT, ping_interval=3, ping_timeout=60)
 asyncio.get_event_loop().run_until_complete(start_server)
