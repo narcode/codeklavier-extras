@@ -102,6 +102,7 @@ for category in consumer_categories:
 	consumers[category] = set()
 
 forrest = {}
+values = {}
 
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
@@ -230,12 +231,23 @@ def unregister(websocket):
 	print_consumers_count()
 
 def apply_transform(msg):
+	if "marker" in msg["tree"] or "master" in msg["tree"]:
+		return
+
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
 
 def apply_shape(msg):
+	if "marker" in msg["tree"] or "master" in msg["tree"]:
+		return
+	
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["shape"] = msg["shape"]
+
+def apply_values(msg):
+	keys = msg["key"].split(",")
+	for key in keys:
+		values[key] = msg["payload"]
 
 async def send_msg(websocket, msg):
 	await websocket.send(msg)
@@ -244,18 +256,25 @@ async def broadcast(consumers, msg):
 	await asyncio.wait([websocket.send(msg) for websocket in consumers])
 
 async def ckar(websocket, path):
-	print(path)
+	# print(path)
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
+		
 		for marker_transform_msg in marker_transform_msgs:
 			await send_msg(websocket, marker_transform_msg)
 		await send_msg(websocket, json.dumps({"type": "serverEvent", "payload": "endMarkerConfig"}))
+		
 		for key in forrest.keys():
 			transform = forrest[key]["transform"]
 			shape = forrest[key]["shape"]
 			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
 			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))
+		
+		for key in values.keys():
+			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values["key"]}))
+
 		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
+
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
@@ -271,9 +290,9 @@ async def ckar(websocket, path):
 
 	if path == "/ckar_serve":
 		try:
-			print("Connected Supplier!")
+			# print("Connected Supplier!")
 			await send_msg(websocket, server_state_msg())
-			print("Sent Server State: " + server_state_msg())
+			# print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
 				print("IN: " + message)
 				msg = json.loads(message)
@@ -300,7 +319,7 @@ async def ckar(websocket, path):
 						await broadcast(consumers["basic"], json.dumps(msg))
 
 				if msg["type"] == "value":
-					#  TODO: apply values
+					apply_values(msg)
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
 
@@ -321,7 +340,8 @@ async def ckar(websocket, path):
 			if args["debug"]:
 				print(e)
 		finally:
-			print("Disconnected Supplier!")
+			pass
+			# print("Disconnected Supplier!")
 
 start_server = websockets.serve(ckar, HOST, PORT, ping_interval=3, ping_timeout=60)
 asyncio.get_event_loop().run_until_complete(start_server)
