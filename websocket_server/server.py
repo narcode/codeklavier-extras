@@ -231,10 +231,16 @@ def unregister(websocket):
 	print_consumers_count()
 
 def apply_transform(msg):
+	if "marker" in msg["tree"] or "master" in msg["tree"]:
+		return
+
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
 
 def apply_shape(msg):
+	if "marker" in msg["tree"] or "master" in msg["tree"]:
+		return
+	
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["shape"] = msg["shape"]
 
