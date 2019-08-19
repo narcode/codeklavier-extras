@@ -102,6 +102,7 @@ for category in consumer_categories:
 	consumers[category] = set()
 
 forrest = {}
+values = {}
 
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
@@ -247,15 +248,22 @@ async def ckar(websocket, path):
 	print(path)
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
+		
 		for marker_transform_msg in marker_transform_msgs:
 			await send_msg(websocket, marker_transform_msg)
 		await send_msg(websocket, json.dumps({"type": "serverEvent", "payload": "endMarkerConfig"}))
+		
 		for key in forrest.keys():
 			transform = forrest[key]["transform"]
 			shape = forrest[key]["shape"]
 			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
 			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))
+		
+		for key in values.keys():
+			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values["key"]}))
+
 		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
+		
 		try:
 			async for message in websocket:
 				msg = json.loads(message)
@@ -300,7 +308,7 @@ async def ckar(websocket, path):
 						await broadcast(consumers["basic"], json.dumps(msg))
 
 				if msg["type"] == "value":
-					#  TODO: apply values
+					values[msg["key"]] = msg["payload"]
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
 
