@@ -271,7 +271,7 @@ async def ckar(websocket, path):
 			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))
 		
 		for key in values.keys():
-			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values["key"]}))
+			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values[key]}))
 
 		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 
