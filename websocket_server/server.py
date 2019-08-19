@@ -238,6 +238,11 @@ def apply_shape(msg):
 	assure_tree(msg["tree"])
 	forrest[msg["tree"]]["shape"] = msg["shape"]
 
+def apply_values(msg):
+	keys = msg["key"].split(",")
+	for key in keys:
+		values[key] = msg["payload"]
+
 async def send_msg(websocket, msg):
 	await websocket.send(msg)
 
@@ -308,7 +313,7 @@ async def ckar(websocket, path):
 						await broadcast(consumers["basic"], json.dumps(msg))
 
 				if msg["type"] == "value":
-					values[msg["key"]] = msg["payload"]
+					apply_values(msg)
 					if len(consumers["basic"]) > 0:
 						await broadcast(consumers["basic"], json.dumps(msg))
 
