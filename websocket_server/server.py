@@ -8,6 +8,7 @@ import json
 import socket
 import os
 import argparse
+import datetime
 
 from netstuff import *
 
@@ -62,15 +63,25 @@ parser.add_argument("-f", "--file",
 	default="NONE"
 )
 
+parser.add_argument("--log", 
+	help="write all incoming messages to a log file",
+	dest="log",
+	action="store_true"
+)
+
 args = vars(parser.parse_args())
 # print(args)
 
 STATE_FILE = "lsys-state.json"
+LOG_FILE = "log.txt"
 STATE_LOAD_FILE = STATE_FILE
 MARKER_TRANSFORMS_FILE = "marker-transforms.json"
 
 if args["reset"] and (not args["nosave"]) and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
+
+if args["reset"] and os.path.exists(LOG_FILE):
+	os.remove(LOG_FILE)
 
 PORT = args["port"]
 HOST = None
@@ -103,6 +114,15 @@ for category in consumer_categories:
 
 forrest = {}
 values = {}
+
+if args["log"]:
+	log_file = open(LOG_FILE, "a+")
+
+def write_log(s):
+	if args["log"]:
+		s = datetime.datetime.now().isoformat() + " - " + s + "\n"
+		log_file.write(s)
+		log_file.flush()
 
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
@@ -295,6 +315,7 @@ async def ckar(websocket, path):
 			# print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
 				print("IN: " + message)
+				write_log(message)
 				msg = json.loads(message)
 
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
@@ -342,6 +363,8 @@ async def ckar(websocket, path):
 		finally:
 			pass
 			# print("Disconnected Supplier!")
+
+write_log("Started with state: " + serialize_forrest())
 
 start_server = websockets.serve(ckar, HOST, PORT, ping_interval=3, ping_timeout=60)
 asyncio.get_event_loop().run_until_complete(start_server)
