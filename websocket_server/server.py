@@ -154,6 +154,10 @@ def assure_tree(key):
 		forrest[key] = empty_lsys()
 		print("Created L-Sys with Key: " + key)
 
+def validate_lsys(string):
+	# TODO: implement properly
+	return "@" in string and "." in string
+
 def parse_forrest(string):
 	if string == "":
 		reset_forrest()
@@ -346,16 +350,17 @@ async def ckar(websocket, path):
 
 				if msg["type"] == "lsys":
 					try:
+						if not validate_lsys(msg["payload"]):
+							raise Exception("L-Sys validation failed!")
+
 						parse_forrest(msg["payload"])
 						store_state()
 						if len(consumers["basic"]) > 0:
 							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forrest()}))
 					except Exception as e:
 						print("Invalid L-Sys!")
-						print(serialize_forrest())
-						print(e);
 						if len(consumers["console"]) > 0:
-							await broadcast(consumers["console"], json.dumps({"type": "lsys", "payload": "Invalid L-Sys!"}))
+							await broadcast(consumers["console"], json.dumps({"type": "console", "payload": "Invalid L-Sys!"}))
 
 		except websockets.exceptions.ConnectionClosed as e:
 			if args["debug"]:
