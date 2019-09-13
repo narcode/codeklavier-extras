@@ -83,7 +83,7 @@ if args["host"] != "NONE":
 if args["file"] != "NONE":
 	STATE_LOAD_FILE = args["file"]
 
-NUM_SHAPES = 6
+NUM_SHAPES = 7
 
 if HOST == None:
 	HOST = get_local_ip()
