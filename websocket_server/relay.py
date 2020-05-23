@@ -40,7 +40,7 @@ parser.add_argument('--to-master',
 	dest="to"
 )
 
-parser.add_argument("--forward-all", 
+parser.add_argument("--forward-all",
 	help="relay all messages (also view and console)",
 	dest="forward_all",
 	action="store_true"
@@ -108,7 +108,7 @@ async def supplierLoop():
 					print(" > " + message)
 					message = None
 					relay_queue.task_done()
-		
+
 		except Exception as e:
 			print("Exception in supplier loop ...")
 			print(e)
