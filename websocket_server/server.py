@@ -29,6 +29,13 @@ parser.add_argument('-d', '--debug',
 	action="store_true"
 )
 
+parser.add_argument('-i', '--ip',
+	help="specify the servers ip",
+	action="store",
+	dest="host",
+	default="NONE"
+)
+
 parser.add_argument('-p', '--port',
 	help="specify the servers port",
 	dest="port",
@@ -50,9 +57,9 @@ parser.add_argument("-n", "--nosave",
 )
 
 parser.add_argument("-a", "--announce",
-	help="announce a host/ip to store in the master server",
+	help="announce a url to store in the master server",
 	action="store",
-	dest="host",
+	dest="url",
 	default="NONE"
 )
 
@@ -85,27 +92,30 @@ if args["reset"] and os.path.exists(LOG_FILE):
 
 PORT = args["port"]
 HOST = None
-ANNOUNCE_HOST = None
+ANNOUNCE_URL = None
 DO_ANNOUNCE = not args["local"]
 
-if args["host"] != "NONE":
-	ANNOUNCE_HOST = args["host"]
+if args["url"] != "NONE":
+	ANNOUNCE_URL = args["url"]
 
 if args["file"] != "NONE":
 	STATE_LOAD_FILE = args["file"]
+
+if args["host"] != "NONE":
+	HOST = args["host"]
 
 NUM_SHAPES = 7
 
 if HOST == None:
 	HOST = get_local_ip()
 
-if ANNOUNCE_HOST == None:
-	ANNOUNCE_HOST = HOST
-
 if DO_ANNOUNCE:
-	announce_server(ANNOUNCE_HOST, PORT)
+	if ANNOUNCE_URL != None:
+		announce_server_url(ANNOUNCE_URL)
+	elif HOST != None:
+		announce_server(HOST, PORT)
 else:
-	print("Did not announce my IP to master server.")
+	print("Did not announce myself to master server.")
 
 auth_token_server = get_auth_token_server()
 
