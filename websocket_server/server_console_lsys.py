@@ -24,12 +24,23 @@ parser.add_argument('-l', '--local',
 	action="store_true"
 )
 
+parser.add_argument('-c', '--channel',
+    help="select channel which to connect to.",
+    action="store",
+    dest="channel",
+    default="NONE"
+)
+
 args = vars(parser.parse_args())
 
+channel = None
+if args["channel"] != "NONE":
+    channel = args["channel"]
+
 if args["local"]:
-	ws_uri = get_local_websocket_uri("ckar_serve")
+    ws_uri = get_local_websocket_uri("ckar_serve")
 else:
-	ws_uri = get_websocket_uri("ckar_serve")
+    ws_uri = get_websocket_uri("ckar_serve", channel)
 
 auth_token_client = get_auth_token_client()
 

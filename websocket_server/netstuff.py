@@ -27,7 +27,7 @@ def get_credentials(credentials):
 			return credentials
 	except Exception as e:
 		pass
-	
+
 	return None
 
 
@@ -66,7 +66,7 @@ def announce_server(host, port, credentials=None):
 
 def get_websocket_uri(path, channel=None):
 	if channel == None:
-		credentials = get_credentials()
+		credentials = get_credentials(None)
 		if credentials == None:
 			print("No channel specified.")
 			return

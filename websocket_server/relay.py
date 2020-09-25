@@ -16,13 +16,27 @@ parser.add_argument('--from',
 	help="specify from where to to receive messages",
 	action="store",
 	dest="from",
-	default="MASTER"
+	default="NONE"
 )
 
 parser.add_argument('--to',
 	help="specify to where to relay messages",
 	action="store",
 	dest="to",
+	default="NONE"
+)
+
+parser.add_argument('--from-channel',
+	help="specify from which channel to receive messages",
+	action="store",
+	dest="from-channel",
+	default="NONE"
+)
+
+parser.add_argument('--to-channel',
+	help="specify to which channel to relay messages",
+	action="store",
+	dest="to-channel",
 	default="NONE"
 )
 
@@ -33,12 +47,6 @@ parser.add_argument('--from-local',
 	dest="from"
 )
 
-parser.add_argument('--to-master',
-	help="relay messages to master server",
-	action="store_const",
-	const="MASTER",
-	dest="to"
-)
 
 parser.add_argument("--forward-all",
 	help="relay all messages (also view and console)",
@@ -54,11 +62,18 @@ parser.add_argument("--silent", "-s",
 
 args = vars(parser.parse_args())
 
-if args["to"] == "MASTER":
-	args["to"] = get_websocket_uri("ckar_serve")
+if args["to-channel"] == "NONE":
+	args["to-channel"] = None
 
-if args["from"] == "MASTER":
-	args["from"] = get_websocket_uri("ckar_consume")
+if args["from-channel"] == "NONE":
+	args["from-channel"] = None
+
+if args["to"] == "NONE":
+	args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
+
+if args["from"] == "NONE":
+	args["from"] = get_websocket_uri("ckar_consume", args["from-channel"])
+
 
 auth_token_client = get_auth_token_client()
 
