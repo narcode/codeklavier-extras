@@ -25,7 +25,9 @@ def get_credentials(credentials):
 		with open(MASTER_CREDENTIALS_FILE, "r", encoding="utf-8") as file:
 			credentials = json.loads(file.read())
 			return credentials
-
+	except Exception as e:
+		pass
+	
 	return None
 
 
