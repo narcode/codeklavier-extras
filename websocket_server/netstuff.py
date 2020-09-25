@@ -4,10 +4,15 @@ import socket
 import hashlib
 import base64
 import hmac
+import os
 
 SET_URL = "https://ar.codeklavier.space/master/set"
 GET_URL = "https://ar.codeklavier.space/master/channel"
 MASTER_CREDENTIALS_FILE = "master-credentials.json"
+
+AUTH_TOKEN_SERVER_FILE = "auth_token_server.txt"
+AUTH_TOKEN_CLIENT_FILE = "auth_token_client.txt"
+
 
 def get_default_port():
 	return 8081
@@ -81,3 +86,17 @@ def get_local_ip():
 	ret = s.getsockname()[0]
 	s.close()
 	return ret
+
+def get_auth_token(filename):
+	ret = None
+	if(os.path.exists(filename)):
+		with open(filename, "r", encoding="utf-8") as file:
+			ret = file.read().strip()
+
+	return ret
+
+def get_auth_token_server():
+	return get_auth_token(AUTH_TOKEN_SERVER_FILE)
+
+def get_auth_token_client():
+	return get_auth_token(AUTH_TOKEN_CLIENT_FILE)

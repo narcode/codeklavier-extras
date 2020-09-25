@@ -60,6 +60,7 @@ if args["to"] == "MASTER":
 if args["from"] == "MASTER":
 	args["from"] = get_websocket_uri("ckar_consume")
 
+auth_token_client = get_auth_token_client()
 
 relay_queue = None
 
@@ -94,6 +95,9 @@ async def supplierLoop():
 		try:
 			async with websockets.connect(args["to"], ping_interval=3, ping_timeout=None) as websocket:
 				print("Connected as supplier")
+
+				if auth_token_client != None:
+					await websocket.send(json.dumps({"type": "auth", "token": auth_token_client}))
 
 				# oh still an old message from last time?
 				if message != None:

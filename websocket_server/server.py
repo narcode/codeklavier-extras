@@ -107,6 +107,11 @@ if DO_ANNOUNCE:
 else:
 	print("Did not announce my IP to master server.")
 
+auth_token_server = get_auth_token_server()
+
+if(auth_token_server == None):
+	print("Warning: This server does accept messages from anyone!")
+
 consumer_categories = ["basic", "console", "view"]
 consumers = {}
 for category in consumer_categories:
@@ -312,15 +317,29 @@ async def ckar(websocket, path):
 		finally:
 			unregister(websocket)
 
+	auth_token_client = None
+
 	if path == "/ckar_serve":
 		try:
 			# print("Connected Supplier!")
 			await send_msg(websocket, server_state_msg())
 			# print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
-				print("IN: " + message)
-				write_log(message)
+
 				msg = json.loads(message)
+				if msg["type"] == "auth":
+					auth_token_client = msg["token"]
+					print("Received auth token ...")
+					if auth_token_server == auth_token_client:
+						print("... seems legit!")
+
+				if auth_token_server != None and auth_token_server != auth_token_client:
+					print("Websocket not authenticated; not accepting messages!")
+					continue
+
+				if msg["type"] != "auth":
+					print("IN: " + message)
+					write_log(message)
 
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))

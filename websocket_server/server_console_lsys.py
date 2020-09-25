@@ -31,11 +31,14 @@ if args["local"]:
 else:
 	ws_uri = get_websocket_uri("ckar_serve")
 
+auth_token_client = get_auth_token_client()
 
 async def repl():
     async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
-    	while True: 
-        	cmd = await ainput("Enter CKAR LSystem Command: ")
-        	await websocket.send(json.dumps({"type": "lsys", "payload": cmd}))
+        if auth_token_client != None:
+            await websocket.send(json.dumps({"type": "auth", "token": auth_token_client}))
+        while True: 
+            cmd = await ainput("Enter CKAR LSystem Command: ")
+            await websocket.send(json.dumps({"type": "lsys", "payload": cmd}))
 
 asyncio.get_event_loop().run_until_complete(repl())
