@@ -21,10 +21,10 @@ def get_default_port():
 def get_credentials(credentials):
 	if(credentials != None):
 		return credentials
-
-	with open(MASTER_CREDENTIALS_FILE, "r", encoding="utf-8") as file:
-		credentials = json.loads(file.read())
-		return credentials
+	try:
+		with open(MASTER_CREDENTIALS_FILE, "r", encoding="utf-8") as file:
+			credentials = json.loads(file.read())
+			return credentials
 
 	return None
 
