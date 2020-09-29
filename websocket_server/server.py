@@ -127,6 +127,16 @@ consumers = {}
 for category in consumer_categories:
 	consumers[category] = set()
 
+
+stats = {
+	"supplierConnected": False,
+	"clientsConnected": 0,
+	"totalClientsConnected": 0,
+	"totalMessagesSent": 0,
+	"totalMessagesReceived": 0,
+	"runningSince": str(datetime.datetime.now())
+}
+
 forrest = {}
 values = {}
 
@@ -289,6 +299,7 @@ def apply_values(msg):
 		values[key] = msg["payload"]
 
 async def send_msg(websocket, msg):
+	stats["totalMessagesSent"] = stats["totalMessagesSent"] + 1
 	await websocket.send(msg)
 
 async def broadcast(consumers, msg):
@@ -296,8 +307,21 @@ async def broadcast(consumers, msg):
 
 async def ckar(websocket, path):
 	# print(path)
+
+	if path == "/ckar_stats":
+		try:
+			while True:
+				stats["clientsConnected"] = len(consumers["basic"])
+				await send_msg(websocket, json.dumps(stats))
+				await asyncio.sleep(2)
+		except websockets.exceptions.ConnectionClosed as e:
+			pass
+		finally:
+			pass
+
 	if path == "/ckar_consume":
 		register(consumers["basic"], websocket)
+		stats["totalClientsConnected"] = stats["totalClientsConnected"] + 1
 		
 		for marker_transform_msg in marker_transform_msgs:
 			await send_msg(websocket, marker_transform_msg)
@@ -332,9 +356,13 @@ async def ckar(websocket, path):
 	if path == "/ckar_serve":
 		try:
 			# print("Connected Supplier!")
+			stats["supplierConnected"] = True
+
 			await send_msg(websocket, server_state_msg())
 			# print("Sent Server State: " + server_state_msg())
 			async for message in websocket:
+
+				stats["totalMessagesReceived"] = stats["totalMessagesReceived"] + 1
 
 				msg = json.loads(message)
 				if msg["type"] == "auth":
@@ -395,8 +423,8 @@ async def ckar(websocket, path):
 			if args["debug"]:
 				print(e)
 		finally:
-			pass
-			# print("Disconnected Supplier!")
+			stats["supplierConnected"] = False
+
 
 write_log("Started with state: " + serialize_forrest())
 
