@@ -4,6 +4,7 @@ import json
 import argparse
 import sys
 import socket
+import time
 
 from netstuff import *
 
@@ -60,6 +61,13 @@ parser.add_argument("--silent", "-s",
 	action="store_true"
 )
 
+parser.add_argument("--delay", "-d",
+	help="specify a delay in seconds",
+	action="store",
+	dest="delay",
+	default="NONE"
+)
+
 args = vars(parser.parse_args())
 
 if args["to-channel"] == "NONE":
@@ -73,6 +81,11 @@ if args["to"] == "NONE":
 
 if args["from"] == "NONE":
 	args["from"] = get_websocket_uri("ckar_consume", args["from-channel"])
+
+if args["delay"] == "NONE":
+	args["delay"] = None
+else:
+	args["delay"] = float(args["delay"])
 
 
 auth_token_client = get_auth_token_client()
@@ -94,8 +107,11 @@ async def receiveLoop():
 					if not "\"type\": \"transform\", \"tree\": \"marker" in message or "\"type\": \"transform\", \"tree\": \"master" in message or "\"type\": \"serverEvent\"" in message:
 						if not args["silent"]:
 							print(" < " + message)
+						send_time = 0
+						if args["delay"] != None:
+							send_time = time.time() + args["delay"]
 						if relay_queue != None:
-							await relay_queue.put(message)
+							await relay_queue.put([send_time, message])
 
 		except Exception as e:
 			print("Exception in consumer loop ...")
@@ -123,8 +139,11 @@ async def supplierLoop():
 
 				while True:
 					message = await relay_queue.get()
-					await websocket.send(message)
-					print(" > " + message)
+					now = time.time()
+					if message[0] > 0 and now < message[0]:
+						await asyncio.sleep(message[0] - now)
+					await websocket.send(message[1])
+					print(" > " + message[1])
 					message = None
 					relay_queue.task_done()
 
@@ -141,6 +160,9 @@ print("Relaying from: " + args["from"])
 if args["to"] != "NONE":
 	print("Relaying to: " + args["to"])
 	tasks.append(supplierLoop())
+
+if args["delay"] != None:
+	print("Relay Delay: " + str(args["delay"]) + " seconds")
 
 async def main():
 	global relay_queue
