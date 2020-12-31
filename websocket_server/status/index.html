@@ -61,7 +61,7 @@
 </html>
 
 <script type="text/javascript">
-    var webSocket = $.simpleWebSocket({ url: 'wss://ar.codeklavier.space:443/ckar_status', attempts: 60});
+    var webSocket = $.simpleWebSocket({ url: 'ws://127.0.0.1:8081/ckar_status', attempts: 60});
     webSocket.connect();
     
     webSocket.listen(function(message) {

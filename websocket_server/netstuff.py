@@ -77,7 +77,7 @@ def get_websocket_uri(path, channel=None):
 
 	req = urllib.request.urlopen(url)
 	data = json.loads(req.read().decode("utf-8") )
-	return data["url"] + path
+	return data["websocketBaseURL"] + path
 
 def get_local_websocket_uri(path):
 	return "ws://" + get_local_ip() + ":" + str(get_default_port()) + "/" + path
