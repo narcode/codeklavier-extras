@@ -58,7 +58,7 @@ def set_channel_status(payload, credentials=None):
 
 def announce_server_url(url, credentials=None):
 	print("Annoucing " + str(url) + " ...")
-	set_channel_status('{"status": "online", "url": "' + url + '"}', credentials)
+	set_channel_status('{"status": "online", "websocketBaseURL": "' + url + '"}', credentials)
 
 def announce_server(host, port, credentials=None):
 	announce_server_url("ws://" + str(host) + ":" + str(port) + "/", credentials)
