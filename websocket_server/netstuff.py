@@ -57,8 +57,8 @@ def set_channel_status(payload, credentials=None):
 		print("... could not validate with master server. Server is not announced!")
 
 def announce_server_url(url, credentials=None):
-	print("Annoucing " + str(url) + " ...")
-	set_channel_status('{"status": "online", "websocketBaseURL": "' + url + '"}', credentials)
+	print("Announcing " + str(url) + " ... status must be set to 'online' manually.");
+	set_channel_status('{"websocketBaseURL": "' + url + '"}', credentials)
 
 def announce_server(host, port, credentials=None):
 	announce_server_url("ws://" + str(host) + ":" + str(port) + "/", credentials)
