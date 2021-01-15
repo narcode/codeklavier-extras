@@ -1,10 +1,24 @@
 from netstuff import *
+import json
+
+# to select which channel the information is sent to put
+# put the according master-credentials.json file into
+# the folder.
 
 # set eventISODate and eventURL to "" to 'unannounce'
-# one could also set "name" to change the channel name.
+# one could also set "name" to change the channel name
 
-set_channel_status('''{
-	"description": "...",
-	"eventISODate": "2020-12-31T12:58:46+00:00",
-	"eventURL": "https://cool.event.org",
-}''');
+set_channel_status(json.dumps({
+	"description": "..."
+	"eventISODate": "",
+	"eventURL": ""
+}));
+
+# relevant info keys:
+# - status ("online" or "offline")
+# - name
+# - description
+# - websocketBaseURL (don't set manually ...)
+# - eventURL
+# - eventISODate (like: 2021-04-16T18:00:00Z)
+# - --> note: should be in UTC timezone
