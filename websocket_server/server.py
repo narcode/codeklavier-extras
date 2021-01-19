@@ -18,7 +18,7 @@ from netstuff import *
 parser = argparse.ArgumentParser(description='Websocket server for CodeklaviAR')
 
 parser.add_argument('-l', '--local',
-	help="don't announce this Websocket server to the master server.",
+	help="don't announce this server to the master server.",
 	dest="local",
 	action="store_true"
 )
@@ -57,7 +57,7 @@ parser.add_argument("-n", "--nosave",
 )
 
 parser.add_argument("-a", "--announce",
-	help="announce a url to store in the master server",
+	help="explicitly specify a url to announce in the master server",
 	action="store",
 	dest="url",
 	default="NONE"
@@ -76,11 +76,18 @@ parser.add_argument("--log",
 	action="store_true"
 )
 
+parser.add_argument("-o", "--output", 
+	help="explicitly specify the log file (default: log.txt)",
+	action="store",
+	dest="logfile",
+	default="log.txt"
+)
+
 args = vars(parser.parse_args())
 # print(args)
 
 STATE_FILE = "lsys-state.json"
-LOG_FILE = "log.txt"
+LOG_FILE = args["logfile"]
 STATE_LOAD_FILE = STATE_FILE
 MARKER_TRANSFORMS_FILE = "marker-transforms.json"
 

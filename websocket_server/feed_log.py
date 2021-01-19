@@ -20,14 +20,8 @@ parser.add_argument('-e', '--endless',
 	action="store_true"
 )
 
-parser.add_argument('-u', '--url',
-	help="specify websocket serve URI",
-	dest="uri",
-	default=""
-)
-
 parser.add_argument("-f", "--file",
-	help="load state from file",
+	help="load log to feed from file",
 	action="store",
 	dest="file",
 	default="replay.txt"
@@ -40,14 +34,38 @@ parser.add_argument("-t", "--timestretch",
 	default="1"
 )
 
+parser.add_argument('--to',
+    help="specify to where to relay messages",
+    action="store",
+    dest="to",
+    default="NONE"
+)
+
+parser.add_argument('--to-channel',
+    help="select channel which to connect to.",
+    action="store",
+    dest="to-channel",
+    default="NONE"
+)
+
+parser.add_argument("--silent", "-s",
+	help="don't post messages; this might be invoked for performance reasons",
+	dest="silent",
+	action="store_true"
+)
+
+
+
 args = vars(parser.parse_args())
 
-if args["uri"] != "":
-	ws_uri = args["uri"]
-elif args["local"]:
-	ws_uri = get_local_websocket_uri("ckar_serve")
-else:
-	ws_uri = get_websocket_uri("ckar_serve")
+if args["to-channel"] == "NONE":
+    args["to-channel"] = None
+
+if args["to"] == "NONE":
+    args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
+
+ws_uri = args["to"]
+
 
 ts = float(args["timestretch"])
 
@@ -77,7 +95,8 @@ async def feed():
 		continueLooping = True
 		while continueLooping:
 			for msg in msgs:
-				print(msg[1])
+				if not args["silent"]:
+					print(msg[1])
 				await websocket.send(msg[1])
 				await asyncio.sleep(msg[0] * ts)
 			if not doLoop:

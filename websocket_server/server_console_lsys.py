@@ -24,18 +24,30 @@ parser.add_argument('-l', '--local',
 	action="store_true"
 )
 
-parser.add_argument('-c', '--channel',
-    help="select channel which to connect to.",
+parser.add_argument('--to',
+    help="specify to where to relay messages",
     action="store",
-    dest="channel",
+    dest="to",
     default="NONE"
 )
 
+parser.add_argument('--to-channel',
+    help="select channel which to connect to.",
+    action="store",
+    dest="to-channel",
+    default="NONE"
+)
+
+
 args = vars(parser.parse_args())
 
-channel = None
-if args["channel"] != "NONE":
-    channel = args["channel"]
+if args["to-channel"] == "NONE":
+    args["to-channel"] = None
+
+if args["to"] == "NONE":
+    args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
+
+channel = args["to"]
 
 if args["local"]:
     ws_uri = get_local_websocket_uri("ckar_serve")

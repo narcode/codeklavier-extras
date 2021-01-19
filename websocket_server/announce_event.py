@@ -9,9 +9,7 @@ import json
 # one could also set "name" to change the channel name
 
 set_channel_status(json.dumps({
-	"description": "..."
-	"eventISODate": "",
-	"eventURL": ""
+	"description": "This is channel is usually hidden and top secret, so I wonder if your name might actually be Anne or Felipe?"
 }));
 
 # relevant info keys:
