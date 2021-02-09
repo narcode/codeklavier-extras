@@ -48,7 +48,7 @@ parser.add_argument('--to-channel',
     default="NONE"
 )
 
-parser.add_argument("--silent", "-s",
+parser.add_argument("-s", "--silent",
 	help="don't post messages; this might be invoked for performance reasons",
 	dest="silent",
 	action="store_true"
