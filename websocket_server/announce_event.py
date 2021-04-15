@@ -19,5 +19,7 @@ set_channel_status(json.dumps({
 # - websocketBaseURL (don't set manually ...)
 # - eventURL
 # - visible (true or false as boolean, not as string!!)
+# - baseScale (number, 1.0 on default)
+# - baseDistance (number, 1.0 on default)
 # - eventISODate (like: 2021-04-16T18:00:00Z)
 # - --> note: should be in UTC timezone
