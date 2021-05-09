@@ -89,7 +89,6 @@ args = vars(parser.parse_args())
 STATE_FILE = "lsys-state.json"
 LOG_FILE = args["logfile"]
 STATE_LOAD_FILE = STATE_FILE
-MARKER_TRANSFORMS_FILE = "marker-transforms.json"
 
 if args["reset"] and (not args["nosave"]) and os.path.exists(STATE_FILE):
 	os.remove(STATE_FILE)
@@ -111,7 +110,7 @@ if args["file"] != "NONE":
 if args["host"] != "NONE":
 	HOST = args["host"]
 
-NUM_SHAPES = 7
+NUM_SHAPES = 4
 
 if HOST == None:
 	HOST = get_local_ip()
@@ -158,15 +157,6 @@ def write_log(s):
 
 def identity_transform():
 	return {"position": [0, 0, 0], "scale": [1, 1, 1], "rotation": [0, 0, 0]}
-
-def load_marker_transforms():
-	with open(MARKER_TRANSFORMS_FILE, "r", encoding="utf-8") as file:
-		msgs = []
-		mts = json.loads(file.read())
-		for mt in mts:
-			msgs.append(json.dumps({"type": "transform", "tree": mt["tree"], "position": mt["position"], "scale": mt["scale"], "rotation": mt["rotation"]}))
-		return msgs
-marker_transform_msgs = load_marker_transforms()
 
 def empty_lsys():
 	return {"axiom": "0", "rules": [], "transform": identity_transform(), "shape": "1"}
@@ -337,8 +327,8 @@ async def ckar(websocket, path):
 		register(consumers["basic"], websocket)
 		status["totalClientsConnected"] = status["totalClientsConnected"] + 1
 		
-		for marker_transform_msg in marker_transform_msgs:
-			await send_msg(websocket, marker_transform_msg)
+		
+		# this message should be renamed at some point (or removed)
 		await send_msg(websocket, json.dumps({"type": "serverEvent", "payload": "endMarkerConfig"}))
 		
 		for key in forest.keys():
