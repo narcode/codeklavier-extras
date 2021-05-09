@@ -144,7 +144,7 @@ status = {
 	"runningSince": str(datetime.datetime.now())
 }
 
-forrest = {}
+forest = {}
 values = {}
 
 if args["log"]:
@@ -171,10 +171,12 @@ marker_transform_msgs = load_marker_transforms()
 def empty_lsys():
 	return {"axiom": "0", "rules": [], "transform": identity_transform(), "shape": "1"}
 
-def reset_forrest():
-	global forrest
-	forrest = {}
-	forrest["1"] = empty_lsys()
+def reset_forest():
+	global forest
+	global values
+	forest = {}
+	values = {}
+	forest["1"] = empty_lsys()
 
 def reset_lsys(lsys):
 	fresh = empty_lsys()
@@ -182,17 +184,17 @@ def reset_lsys(lsys):
 	lsys["rules"] = fresh["rules"]
 
 def assure_tree(key):
-	if not key in forrest:
-		forrest[key] = empty_lsys()
+	if not key in forest:
+		forest[key] = empty_lsys()
 		print("Created L-Sys with Key: " + key)
 
 def validate_lsys(string):
 	# TODO: implement properly
 	return "@" in string and "." in string
 
-def parse_forrest(string):
+def parse_forest(string):
 	if string == "":
-		reset_forrest()
+		reset_forest()
 		return
 
 	systems = string.strip().split("#")
@@ -207,10 +209,10 @@ def parse_forrest(string):
 		rules = pair[1]
 
 		assure_tree(key)
-		parse_lsys(forrest[key], rules)
+		parse_lsys(forest[key], rules)
 
 def server_state_msg():
-	return json.dumps({"type": "serverState", "numTrees": len(forrest.keys()), "numShapes": NUM_SHAPES})
+	return json.dumps({"type": "serverState", "numTrees": len(forest.keys()), "numShapes": NUM_SHAPES})
 
 def parse_lsys(lsys, string):
 	rules = string.strip().split(",")
@@ -240,22 +242,27 @@ def serialize_lsys(lsys):
 	ret.extend(map(lambda x: x[0] + "." + x[1], ret_list))
 	return ",".join(ret)
 
-def serialize_forrest():
-	ret = map(lambda x: x + "@" + serialize_lsys(forrest[x]), forrest.keys())
+def serialize_forest():
+	ret = map(lambda x: x + "@" + serialize_lsys(forest[x]), forest.keys())
 	return "#".join(ret)
 
 def load_state(filename):
 	if os.path.isfile(filename) and (not args["reset"]):
 		with open(filename, "r", encoding="utf-8") as file:
 			state = json.loads(file.read())
-			parse_forrest(state["forrest"])
+
+			# fix old states - can be removed at some point
+			if "forrest" in state:
+				state["forest"] = state["forrest"]
+
+			parse_forest(state["forest"])
 			for transform_dict in state["transforms"]:
-				forrest[transform_dict["tree"]]["transform"] = transform_dict["transform"]
+				forest[transform_dict["tree"]]["transform"] = transform_dict["transform"]
 			for shape_dict in state["shapes"]:
-				forrest[shape_dict["tree"]]["shape"] = shape_dict["shape"]
-			print("Loaded Forrest: " + serialize_forrest())
+				forest[shape_dict["tree"]]["shape"] = shape_dict["shape"]
+			print("Loaded Forest: " + serialize_forest())
 	else:
-		reset_forrest()
+		reset_forest()
 load_state(STATE_LOAD_FILE)
 
 def store_state():
@@ -263,9 +270,9 @@ def store_state():
 		return
 	with open(STATE_FILE, 'w', encoding='utf-8') as file:
 		state = {
-			"forrest": serialize_forrest(),
-			"transforms": list(map(lambda x: {"tree": x, "transform": forrest[x]["transform"]}, forrest.keys())),
-			"shapes": list(map(lambda x: {"tree": x, "shape": forrest[x]["shape"]}, forrest.keys()))
+			"forest": serialize_forest(),
+			"transforms": list(map(lambda x: {"tree": x, "transform": forest[x]["transform"]}, forest.keys())),
+			"shapes": list(map(lambda x: {"tree": x, "shape": forest[x]["shape"]}, forest.keys()))
 		}
 		file.write(json.dumps(state))
 
@@ -291,14 +298,14 @@ def apply_transform(msg):
 		return
 
 	assure_tree(msg["tree"])
-	forrest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
+	forest[msg["tree"]]["transform"] = {"position": msg["position"], "scale": msg["scale"], "rotation": msg["rotation"]}
 
 def apply_shape(msg):
 	if "marker" in msg["tree"] or "master" in msg["tree"]:
 		return
 	
 	assure_tree(msg["tree"])
-	forrest[msg["tree"]]["shape"] = msg["shape"]
+	forest[msg["tree"]]["shape"] = msg["shape"]
 
 def apply_values(msg):
 	keys = msg["key"].split(",")
@@ -334,16 +341,16 @@ async def ckar(websocket, path):
 			await send_msg(websocket, marker_transform_msg)
 		await send_msg(websocket, json.dumps({"type": "serverEvent", "payload": "endMarkerConfig"}))
 		
-		for key in forrest.keys():
-			transform = forrest[key]["transform"]
-			shape = forrest[key]["shape"]
+		for key in forest.keys():
+			transform = forest[key]["transform"]
+			shape = forest[key]["shape"]
 			await send_msg(websocket, json.dumps({"type": "transform", "tree": key, "position": transform["position"], "scale": transform["scale"], "rotation": transform["rotation"]}))
 			await send_msg(websocket, json.dumps({"type": "shape", "tree": key, "shape": shape}))
 		
 		for key in values.keys():
 			await send_msg(websocket, json.dumps({"type": "value", "key": key, "payload": values[key]}))
 
-		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forrest()}))
+		await send_msg(websocket, json.dumps({"type": "lsys", "payload": serialize_forest()}))
 
 		try:
 			async for message in websocket:
@@ -417,10 +424,10 @@ async def ckar(websocket, path):
 						if not validate_lsys(msg["payload"]):
 							raise Exception("L-Sys validation failed!")
 
-						parse_forrest(msg["payload"])
+						parse_forest(msg["payload"])
 						store_state()
 						if len(consumers["basic"]) > 0:
-							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forrest()}))
+							await broadcast(consumers["basic"], json.dumps({"type": "lsys", "payload": serialize_forest()}))
 					except Exception as e:
 						print("Invalid L-Sys!")
 						if len(consumers["console"]) > 0:
@@ -433,7 +440,7 @@ async def ckar(websocket, path):
 			status["supplierConnected"] = False
 
 
-write_log("Started with state: " + serialize_forrest())
+write_log("Started with state: " + serialize_forest())
 
 start_server = websockets.serve(ckar, HOST, PORT, ping_interval=3, ping_timeout=60)
 asyncio.get_event_loop().run_until_complete(start_server)
