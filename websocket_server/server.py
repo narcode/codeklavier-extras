@@ -369,6 +369,7 @@ async def ckar(websocket, path):
 				status["totalMessagesReceived"] = status["totalMessagesReceived"] + 1
 
 				msg = json.loads(message)
+
 				if msg["type"] == "auth":
 					auth_token_client = msg["token"]
 					print("Received auth token ...")
@@ -382,6 +383,10 @@ async def ckar(websocket, path):
 				if msg["type"] != "auth":
 					print("IN: " + message)
 					write_log(message)
+				
+				if msg["type"] == "reset":
+					print("Server Reset")
+					reset_forest()
 
 				if msg["type"] == "console" and len(consumers["console"]) > 0:
 					await broadcast(consumers["console"], json.dumps({"type": "console", "payload": msg["payload"]}))

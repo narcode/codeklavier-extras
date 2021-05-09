@@ -68,6 +68,12 @@ parser.add_argument("--delay", "-d",
 	default="NONE"
 )
 
+parser.add_argument("--reset", "-r",
+	help="send a reset message to the receiving server on connect",
+	dest="reset",
+	action="store_true"
+)
+
 args = vars(parser.parse_args())
 
 if args["to-channel"] == "NONE":
@@ -120,7 +126,9 @@ async def receiveLoop():
 		print("... reconnecting 'from'-server!")
 		await asyncio.sleep(1)
 
+
 async def supplierLoop():
+	alreadySentReset = False
 	message = None
 	while True:
 		try:
@@ -129,6 +137,10 @@ async def supplierLoop():
 
 				if auth_token_client != None:
 					await websocket.send(json.dumps({"type": "auth", "token": auth_token_client}))
+
+				if (not alreadySentReset) and args["reset"]:
+					await websocket.send(json.dumps({"type": "reset"}))
+					alreadySentReset = True
 
 				# oh still an old message from last time?
 				if message != None:
