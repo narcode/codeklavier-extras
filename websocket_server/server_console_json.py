@@ -45,12 +45,12 @@ if args["to-channel"] == "NONE":
 if args["to"] == "NONE":
     args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
 
-channel = args["to"]
+channel = args["to-channel"]
 
 if args["local"]:
     ws_uri = get_local_websocket_uri("ckar_serve")
 else:
-    ws_uri = get_websocket_uri("ckar_serve", channel)
+    ws_uri = args["to"]
 
 auth_token_client = get_auth_token_client()
 
