@@ -110,7 +110,7 @@ if args["file"] != "NONE":
 if args["host"] != "NONE":
 	HOST = args["host"]
 
-NUM_SHAPES = 4
+NUM_SHAPES = 7
 
 if HOST == None:
 	HOST = get_local_ip()
