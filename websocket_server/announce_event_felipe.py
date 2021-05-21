@@ -9,9 +9,7 @@ import json
 # one could also set "name" to change the channel name
 
 set_channel_status(json.dumps({
-	"description": "Anne is aging pooily chocolate trouble ahead",
-	"eventISODate": "",
-	"eventURL": "",
+	"description": "anne has an elephant crush",
 	"name": "Rehearsals",
 	"visible": True,
 	"status": "online"

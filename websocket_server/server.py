@@ -110,7 +110,7 @@ if args["file"] != "NONE":
 if args["host"] != "NONE":
 	HOST = args["host"]
 
-NUM_SHAPES = 4
+NUM_SHAPES = 8
 
 if HOST == None:
 	HOST = get_local_ip()
@@ -369,7 +369,7 @@ async def ckar(websocket, path):
 				status["totalMessagesReceived"] = status["totalMessagesReceived"] + 1
 
 				msg = json.loads(message)
-
+				
 				if msg["type"] == "auth":
 					auth_token_client = msg["token"]
 					print("Received auth token ...")

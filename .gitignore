@@ -117,3 +117,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+websocket_server/announce_event_felipe.py
