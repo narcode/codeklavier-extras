@@ -13,6 +13,9 @@ websocket_server/auth_token_client.txt
 # Felipes vim stuff
 *.swp
 
+websocket_server/announce_event_felipe.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -117,4 +120,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-websocket_server/announce_event_felipe.py
