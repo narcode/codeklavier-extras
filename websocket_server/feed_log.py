@@ -82,7 +82,7 @@ with open(args["file"]) as fp:
 	lines = fp.readlines()
 	before = None
 	for line in lines:
-		parts = line.split(" - ");
+		parts = line.split(" - ")
 		if parts[1][0] == "{":
 			date =  datetime.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%S.%f")
 			json = parts[1].strip()
@@ -93,7 +93,7 @@ with open(args["file"]) as fp:
 				delta = (date - before).total_seconds()
 			
 			before = date
-			msgs.append([delta, json]);
+			msgs.append([delta, json])
 
 
 async def feed():
