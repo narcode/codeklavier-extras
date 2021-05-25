@@ -54,6 +54,12 @@ parser.add_argument("-s", "--silent",
 	action="store_true"
 )
 
+parser.add_argument("--reset", "-r",
+	help="send a reset message to the receiving server on connect",
+	dest="reset",
+	action="store_true"
+)
+
 
 
 args = vars(parser.parse_args())
@@ -93,6 +99,10 @@ with open(args["file"]) as fp:
 async def feed():
 	async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
 		continueLooping = True
+
+		if args["reset"]:
+			await websocket.send(json.dumps({"type": "reset"}))
+
 		while continueLooping:
 			for msg in msgs:
 				if not args["silent"]:
