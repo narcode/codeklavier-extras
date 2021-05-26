@@ -8,7 +8,9 @@ websocket_server/auth_token_client.txt
 
 
 # Patricks shortcuts
-*.bat 
+*.bat
+
+!websocket_server/stress-test.bat
 
 # Felipes vim stuff
 *.swp
