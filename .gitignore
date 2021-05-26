@@ -12,6 +12,9 @@ websocket_server/auth_token_client.txt
 
 !websocket_server/stress-test.bat
 
+# general logs
+websocket_server/*.txt
+
 # Felipes vim stuff
 *.swp
 
