@@ -52,8 +52,7 @@ async def ws_server():
                 opened = False 
                 print("Websockets connection failed. Is the ip and port correct?")
                 os._exit(1)
-                
-
+        await asyncio.sleep(0.1)
 
 async def prompt_and_send(ws, tree, key, val):
     global sending, opened
