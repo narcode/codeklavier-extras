@@ -41,6 +41,13 @@ parser.add_argument('--to-channel',
 	default="NONE"
 )
 
+parser.add_argument('--to-void',
+	help="specify to which channel to relay messages",
+	action="store_const",
+	const="VOID",
+	dest="to"
+)
+
 parser.add_argument('--from-local',
 	help="receive messages from local machine on port " + str(get_default_port()),
 	action="store_const",
@@ -131,6 +138,15 @@ async def supplierLoop():
 	alreadySentReset = False
 	message = None
 	while True:
+		if args["to"] == "VOID":
+			print("Relaying to the void ...")
+			while True:
+				message = await relay_queue.get()
+				message = None
+				relay_queue.task_done()
+
+			continue
+
 		try:
 			async with websockets.connect(args["to"], ping_interval=3, ping_timeout=None) as websocket:
 				print("Connected as supplier")

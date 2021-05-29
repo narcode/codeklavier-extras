@@ -307,6 +307,7 @@ async def send_msg(websocket, msg):
 	await websocket.send(msg)
 
 async def broadcast(consumers, msg):
+	status["totalMessagesSent"] = status["totalMessagesSent"] + len(consumers)
 	await asyncio.wait([websocket.send(msg) for websocket in consumers])
 
 async def ckar(websocket, path):
