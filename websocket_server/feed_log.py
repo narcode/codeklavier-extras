@@ -77,7 +77,7 @@ ts = float(args["timestretch"])
 
 doLoop = args["loop"]
 
-msgs =  []
+deltaMsgs =  []
 with open(args["file"]) as fp:
 	lines = fp.readlines()
 	before = None
@@ -93,7 +93,19 @@ with open(args["file"]) as fp:
 				delta = (date - before).total_seconds()
 			
 			before = date
-			msgs.append([delta, jsonData])
+			deltaMsgs.append([delta, jsonData])
+
+
+def absoluteTimes(deltaMsgs):
+	msgs = []
+	start = datetime.datetime.now().timestamp()
+	now = start
+
+	for msg in deltaMsgs:
+		now = now + msg[0] * ts
+		msgs.append([now, msg[1]])
+
+	return msgs
 
 
 async def feed():
@@ -104,11 +116,21 @@ async def feed():
 			await websocket.send(json.dumps({"type": "reset"}))
 
 		while continueLooping:
+
+			msgs = absoluteTimes(deltaMsgs)
+
 			for msg in msgs:
+
+				now = datetime.datetime.now().timestamp()
+				if now < msg[0]:
+					delta = msg[0] - now
+					await asyncio.sleep(delta)
+
 				if not args["silent"]:
 					print(msg[1])
+				
 				await websocket.send(msg[1])
-				await asyncio.sleep(msg[0] * ts)
+
 			if not doLoop:
 				continueLooping = False
 
