@@ -108,9 +108,14 @@ def absoluteTimes(deltaMsgs):
 	return msgs
 
 
+auth_token_client = get_auth_token_client()
+
 async def feed():
 	async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
 		continueLooping = True
+
+		if auth_token_client != None:
+			await websocket.send(json.dumps({"type": "auth", "token": auth_token_client}))
 
 		if args["reset"]:
 			await websocket.send(json.dumps({"type": "reset"}))
