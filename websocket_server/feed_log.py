@@ -70,6 +70,9 @@ if args["to-channel"] == "NONE":
 if args["to"] == "NONE":
     args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
 
+if args["local"] == True:
+	args["to"] = get_local_websocket_uri("ckar_serve")
+
 ws_uri = args["to"]
 
 
