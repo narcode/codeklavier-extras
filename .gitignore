@@ -12,8 +12,12 @@ websocket_server/old_logs/**
 
 !websocket_server/stress-test.bat
 
+
 # general logs
 websocket_server/*.txt
+
+!websocket_server/stream-delay-test.txt
+
 
 # Felipes vim stuff
 *.swp
