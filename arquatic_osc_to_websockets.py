@@ -7,14 +7,15 @@ from pythonosc import dispatcher
 from pythonosc.udp_client import SimpleUDPClient
 from threading import Thread
 import json
-
 import aiohttp
 
-#HOST = '192.168.178.178:8081'
+### This program is used for Arquatic performances. It has 2 modes, which have to be booted independently. 
+### One that receives OSC messages and sends data via websockets and 
+### One that receives websocket data and sends OSC messages. boot with arg -type to choose the mode.
 
 parser = argparse.ArgumentParser() 
-parser.add_argument('-ip', type=str, help='IP address and port, i.e. 127.0.0.1:8081')
-parser.add_argument('-type', type=str, help='boot as OSC client')
+parser.add_argument('-ip', type=str, help='IP address and port of the websocket server to connect to, i.e. 127.0.0.1:8081')
+parser.add_argument('-type', type=str, help='boot as localhost OSC client to reeive msgs from supercollider. Port is hardocded to 57120')
 args = vars(parser.parse_args())
 
 URL = f'ws://{args["ip"]}/ckar_serve'
