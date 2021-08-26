@@ -70,6 +70,9 @@ if args["to-channel"] == "NONE":
 if args["to"] == "NONE":
     args["to"] = get_websocket_uri("ckar_serve", args["to-channel"])
 
+if args["local"] == True:
+	args["to"] = get_local_websocket_uri("ckar_serve")
+
 ws_uri = args["to"]
 
 
@@ -77,7 +80,7 @@ ts = float(args["timestretch"])
 
 doLoop = args["loop"]
 
-msgs =  []
+deltaMsgs =  []
 with open(args["file"]) as fp:
 	lines = fp.readlines()
 	before = None
@@ -93,22 +96,49 @@ with open(args["file"]) as fp:
 				delta = (date - before).total_seconds()
 			
 			before = date
-			msgs.append([delta, jsonData])
+			deltaMsgs.append([delta, jsonData])
 
+
+def absoluteTimes(deltaMsgs):
+	msgs = []
+	start = datetime.datetime.now().timestamp()
+	now = start
+
+	for msg in deltaMsgs:
+		now = now + msg[0] * ts
+		msgs.append([now, msg[1]])
+
+	return msgs
+
+
+auth_token_client = get_auth_token_client()
 
 async def feed():
 	async with websockets.connect(ws_uri, ping_interval=3, ping_timeout=None) as websocket:
 		continueLooping = True
 
+		if auth_token_client != None:
+			await websocket.send(json.dumps({"type": "auth", "token": auth_token_client}))
+
 		if args["reset"]:
 			await websocket.send(json.dumps({"type": "reset"}))
 
 		while continueLooping:
+
+			msgs = absoluteTimes(deltaMsgs)
+
 			for msg in msgs:
+
+				now = datetime.datetime.now().timestamp()
+				if now < msg[0]:
+					delta = msg[0] - now
+					await asyncio.sleep(delta)
+
 				if not args["silent"]:
 					print(msg[1])
+				
 				await websocket.send(msg[1])
-				await asyncio.sleep(msg[0] * ts)
+
 			if not doLoop:
 				continueLooping = False
 

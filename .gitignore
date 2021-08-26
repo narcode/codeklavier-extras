@@ -5,15 +5,19 @@ websocket_server/replay.txt
 websocket_server/master-credentials.json
 websocket_server/auth_token_server.txt
 websocket_server/auth_token_client.txt
-
+websocket_server/old_logs/**
 
 # Patricks shortcuts
 *.bat
 
 !websocket_server/stress-test.bat
 
+
 # general logs
 websocket_server/*.txt
+
+!websocket_server/stream-delay-test.txt
+
 
 # Felipes vim stuff
 *.swp
