@@ -2,7 +2,7 @@ websocket_server/lsys-state.txt
 websocket_server/lsys-state.json
 websocket_server/log.txt
 websocket_server/replay.txt
-websocket_server/master-credentials.json
+websocket_server/master-credentials*
 websocket_server/auth_token_server.txt
 websocket_server/auth_token_client.txt
 websocket_server/old_logs/**
