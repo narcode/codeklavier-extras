@@ -6,8 +6,13 @@ import json
 # the folder.
 
 set_channel_status(json.dumps({
-	"description": "This is channel is usually hidden and top secret, so I wonder if your name might actually be Anne or Felipe?"
-}));
+	"visible": True,
+	"name": "Live",
+	# "status": "offline",
+	"description": "Currently no ARquatic event is planned for the next months. Why not book us?",
+	"eventISODate": "",
+	"eventURL": "https://codeklavier.space/arquatic"
+}))
 
 # relevant info keys:
 # - status (string, "online" or "offline")
@@ -20,6 +25,7 @@ set_channel_status(json.dumps({
 # - baseDistance (number, 1.0 on default)
 # - brightnessMultiplier (number, 1.0 on default)
 # - eventISODate (like: 2021-04-16T18:00:00Z)
+# - nightMode (True or False; if True light estimation is deactivated)
 # - --> note: should be in UTC timezone
 
 # set eventISODate and eventURL to "" to 'unannounce'
