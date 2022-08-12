@@ -29,8 +29,8 @@ set_channel_status(json.dumps({
 # - baseDistance (number, 1.0 on default)
 # - brightnessMultiplier (number, 1.0 on default)
 # - eventISODate (like: 2021-04-16T18:00:00Z)
-# - nightMode (True or False; if True light estimation is deactivated)
 # - --> note: should be in UTC timezone
+# - nightMode (True or False; if True light estimation is deactivated)
 
 # if the _nl entries are empty then then the english version will be taken
 
