@@ -8,16 +8,16 @@ import json
 set_channel_status(json.dumps({
 	"visible": True,
 	"name": "Live",
-	"name_nl": "Live NL",
+	"name_nl": "Live",
 	# "status": "offline",
-	"description": "Currently no ARquatic event is planned for the next months. Why not book us?",
-	"description_nl": "NL",
+	"description": "No ARquatic events are planned for the next months. Why not book us?",
+	"description_nl": "Er zijn de komende maanden geen ARquatic-evenementen gepland. Waarom boekt u ons niet?",
 	"eventISODate": "",
 	"eventURL": "https://codeklavier.space/arquatic"
 }))
 
 # relevant info keys:
-# - status (string, "online" or "offline")
+# - status (string, "online" or "offline") - can also be "bundled"
 # - name (string)
 # - description (string)
 # - name_nl (string)
@@ -31,6 +31,7 @@ set_channel_status(json.dumps({
 # - eventISODate (like: 2021-04-16T18:00:00Z)
 # - --> note: should be in UTC timezone
 # - nightMode (True or False; if True light estimation is deactivated)
+# - bundledID 
 
 # if the _nl entries are empty then then the english version will be taken
 

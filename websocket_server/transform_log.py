@@ -27,6 +27,14 @@ parser.add_argument("-t", "--time-offset",
     default="0"
 )
 
+parser.add_argument("-c", "--clean",
+	help="remove console messages",
+    action="store_true",
+    dest="clean",
+    default=False
+)
+
+
 args = vars(parser.parse_args())
 
 offset = float(args["time_offset"])
@@ -42,7 +50,8 @@ with open(args["in_file"]) as fp:
 			jsonData = parts[1].strip()
 			t = (date - start_date).total_seconds() + offset
 
-			if "\"type\": \"console\"" in jsonData: continue
+			if args["clean"]:
+				if "\"type\": \"console\"" in jsonData: continue
 			
 			msgs.append({"time": t, "payload": jsonData})
 
